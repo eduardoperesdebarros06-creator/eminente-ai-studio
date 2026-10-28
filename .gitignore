@@ -1,0 +1,8 @@
+node_modules
+dist
+*.local
+.env
+.env.*
+# Dados locais do estúdio (fases futuras)
+data/
+exports/
