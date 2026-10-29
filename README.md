@@ -9,15 +9,49 @@ sem hospedagem e sem APIs pagas.
 | Fase | Escopo | Situação |
 | --- | --- | --- |
 | 1 | Interface navegável, design system e dashboard | **Implementada** |
-| 2 | Content Studio (templates + texto de IA externa) | Planejada |
+| 2 | Content Studio (templates + texto de IA externa) | **Implementada** |
 | 3 | Posts e carrosséis com exportação PNG | Planejada |
 | 4 | Motion: quadros via Playwright + MP4 via FFmpeg | Planejada |
 | 5 | SQLite, biblioteca, histórico e recuperação | Planejada |
 | 6 | Integração opcional com Ollama | Planejada |
 
-Os módulos das fases 2–6 aparecem na interface com o selo **“Não implementado”**
-e a fase prevista. Nenhuma exportação ou gravação é simulada: hoje o aplicativo
-**não gera arquivos nem salva projetos**.
+Os módulos das fases 3–6 aparecem na interface com o selo **“Não implementado”**
+e a fase prevista. Nenhuma exportação é simulada.
+
+O que já gera arquivos de verdade: o Content Studio baixa o conteúdo em `.md` e
+`.json` pelo navegador. Ainda **não** há exportação de imagens (Fase 3) nem de
+vídeo (Fase 4), e a biblioteca de projetos (SQLite) chega na Fase 5.
+
+## Content Studio (Fase 2)
+
+1. **Briefing** — assunto (obrigatório), formato (post, carrossel ou motion),
+   objetivo, tom de voz, público e observações. O assunto também pode ser
+   digitado no campo do dashboard.
+2. **Estrutura**, por um destes caminhos:
+   - **Template** — monta a estrutura a partir do briefing. Não usa IA: os
+     trechos entre `[colchetes]` são marcadores para você substituir, e o
+     estúdio avisa enquanto existirem.
+   - **IA externa** — o estúdio gera um prompt; você cola em qualquer
+     assistente de IA (inclusive versões gratuitas) e cola a resposta de volta.
+     A resposta pode vir em JSON (formato pedido no prompt) ou em texto livre
+     (“Slide 1”, “Título:”, “Legenda:”…). Nada é enviado pela internet pelo app.
+   - **Em branco** — páginas vazias para escrever manualmente.
+3. **Edição** — títulos, textos, duração das cenas (motion), ordem das páginas,
+   legenda, CTA e hashtags, com contadores e validação em tempo real.
+4. **Exportação** — copiar legenda, copiar tudo (Markdown), baixar `.md` e
+   `.json`. O `.json` pode ser reaberto depois em **Abrir .json**. A exportação
+   fica bloqueada enquanto houver erros (avisos não bloqueiam).
+
+**Limites:** post = 1 página; carrossel = 2 a 10 slides; motion = 1 a 12 cenas,
+de 1 a 15 s cada, até 90 s no total; título até 90 caracteres (recomendado 60);
+texto até 420; legenda até 2.200; até 30 hashtags.
+
+**Rascunho automático:** o conteúdo em andamento é salvo no navegador
+(`localStorage`) a cada alteração e recuperado ao reabrir. Isso protege contra
+perda acidental, mas não substitui a biblioteca da Fase 5. Se o navegador
+bloquear o armazenamento, o estúdio avisa; nesse caso, baixe o `.json`. Um
+rascunho corrompido nunca é carregado: o estúdio recomeça e guarda uma cópia
+dos dados originais na chave `eminente:contentDraft.corrupt`.
 
 ## Requisitos (Windows)
 
@@ -74,7 +108,9 @@ src/
     ui/           Design system: Button, Badge, Card, Alert, ProgressBar, campos…
     layout/       AppShell, Sidebar, Topbar, ErrorBoundary
     brand/        Logo e monograma
-  domain/         Regras de negócio puras e testáveis (ex.: validação de briefing)
+  domain/content/ Regras de negócio puras e testáveis: tipos, limites, templates,
+                  reducer do rascunho, validação, prompt, parser de respostas de IA,
+                  exportação e serialização
   features/       Uma pasta por módulo (dashboard, content, design, carousel,
                   motion, library, settings, design-system)
   lib/            Utilitários (classes CSS, preferências locais)
@@ -102,6 +138,14 @@ ao sistema de arquivos fora do frontend.
 
 ## Testes
 
-`npm test` cobre o roteador (normalização e resolução de rotas), a integridade
-do registro de módulos — incluindo a regra de que nenhum módulo de fase futura
-é anunciado como disponível — e a validação de briefing.
+`npm test` cobre:
+
+- roteador e registro de módulos (nenhum módulo de fase futura é anunciado como
+  disponível);
+- briefing, hashtags e validação do rascunho (erros x avisos, limites por formato);
+- todos os templates respeitando os limites de cada formato;
+- reducer do rascunho: páginas, reordenação, troca de formato, importação;
+- parser de respostas de IA: JSON (com e sem bloco de código, chaves em PT/EN,
+  JSON truncado), texto com marcadores e texto em parágrafos;
+- exportação Markdown, nomes de arquivo e recuperação de rascunho (ida e volta e
+  rejeição de dados corrompidos).

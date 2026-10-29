@@ -1,11 +1,13 @@
-import { ArrowRight, ArrowUpRight, Check, FolderOpen } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check } from 'lucide-react';
 import { MODULES, getModule, type ModuleId } from '../../app/modules';
 import { ROADMAP } from '../../app/roadmap';
 import { useLinkProps } from '../../app/router';
-import { Badge, ButtonLink, Card, EmptyState, SectionHeader } from '../../components/ui';
+import { Badge, ButtonLink, Card, SectionHeader } from '../../components/ui';
 import { cx } from '../../lib/cx';
 import { OUTPUT_FORMATS } from '../formats';
 import { ModuleStatusBadge } from '../shared/ModuleStatusBadge';
+import { DraftCard } from './DraftCard';
+import { QuickStart } from './QuickStart';
 
 const PIPELINE: Array<{ step: string; title: string; detail: string; module: ModuleId }> = [
   { step: '01', title: 'Assunto', detail: 'Tema, objetivo e público', module: 'content' },
@@ -54,14 +56,7 @@ export function DashboardPage() {
             Crie conteúdo de marketing, componha posts e carrosséis e transforme tudo em motion
             gráfico com exportação real em PNG e MP4 — rodando localmente, sem serviços pagos.
           </p>
-          <div className="hero__actions">
-            <ButtonLink to="/content" variant="primary" size="lg" iconRight={ArrowRight}>
-              Começar pelo conteúdo
-            </ButtonLink>
-            <ButtonLink to="/design-system" variant="ghost" size="lg">
-              Ver design system
-            </ButtonLink>
-          </div>
+          <QuickStart />
         </div>
         {currentPhase && (
           <aside className="hero__status" aria-label="Estado atual do projeto">
@@ -114,21 +109,14 @@ export function DashboardPage() {
       <div className="dashboard__split">
         <section className="section" aria-labelledby="recent-title">
           <SectionHeader
-            title={<span id="recent-title">Projetos recentes</span>}
+            title={<span id="recent-title">Em andamento</span>}
             actions={
               <ButtonLink to="/library" variant="ghost" size="sm" iconRight={ArrowRight}>
                 Biblioteca
               </ButtonLink>
             }
           />
-          <Card padding="none">
-            <EmptyState
-              icon={FolderOpen}
-              title="Nenhum projeto ainda"
-              description="Projetos salvos aparecerão aqui. A persistência local em SQLite chega na Fase 5; até lá, nada é gravado."
-              compact
-            />
-          </Card>
+          <DraftCard />
         </section>
 
         <section className="section" aria-labelledby="roadmap-title">

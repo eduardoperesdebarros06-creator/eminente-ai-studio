@@ -60,12 +60,13 @@ export const MODULES: readonly StudioModule[] = [
     icon: PenLine,
     group: 'create',
     phase: 2,
-    status: 'planned',
+    status: 'available',
     capabilities: [
-      'Briefing a partir de um assunto',
-      'Templates de copy por formato',
-      'Colagem de texto produzido por IA externa',
-      'Edição estruturada de títulos, apoio e CTA',
+      'Briefing com validação',
+      'Templates de estrutura por formato',
+      'Prompt para IA externa e importação da resposta (JSON ou texto)',
+      'Edição de páginas, cenas, legenda, CTA e hashtags',
+      'Exportação .md e .json e reabertura de .json',
     ],
   },
   {

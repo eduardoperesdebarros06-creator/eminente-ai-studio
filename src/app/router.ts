@@ -41,7 +41,8 @@ function subscribe(onChange: () => void): () => void {
 const getHash = () => window.location.hash;
 
 export function navigate(path: string): void {
-  const target = `#${normalizePath(path)}`;
+  const [p, query] = path.split('?');
+  const target = `#${normalizePath(p ?? '')}${query ? `?${query}` : ''}`;
   if (window.location.hash !== target) window.location.hash = target;
 }
 
@@ -61,4 +62,23 @@ export function useLinkProps(path: string) {
     [path],
   );
   return { href: `#${normalizePath(path)}`, onClick };
+}
+
+/** Lê um parâmetro da query do hash (#/rota?chave=valor). */
+export function readHashQuery(name: string): string | null {
+  const query = window.location.hash.split('?')[1];
+  return query ? new URLSearchParams(query).get(name) : null;
+}
+
+/** Remove a query do hash sem criar entrada no histórico. */
+export function clearHashQuery(): void {
+  const [path] = window.location.hash.split('?');
+  if (path !== window.location.hash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${path}`);
+  }
+}
+
+/** Monta um hash com query: hashWithQuery('/content', { assunto: 'IA' }) → '/content?assunto=IA'. */
+export function pathWithQuery(path: string, params: Record<string, string>): string {
+  return `${normalizePath(path)}?${new URLSearchParams(params).toString()}`;
 }

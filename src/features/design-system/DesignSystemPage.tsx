@@ -14,7 +14,8 @@ import {
   TextArea,
   TextInput,
 } from '../../components/ui';
-import { validateBrief, type BriefErrors, BRIEF_LIMITS } from '../../domain/brief';
+import { EMPTY_BRIEF, validateBrief, type BriefErrors } from '../../domain/content/brief';
+import { LIMITS } from '../../domain/content/limits';
 
 const COLORS = [
   { name: 'Background', token: '--color-bg', hex: '#0B0B0C' },
@@ -45,7 +46,7 @@ export function DesignSystemPage() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const result = validateBrief({ subject, notes });
+    const result = validateBrief({ ...EMPTY_BRIEF, subject, notes });
     setErrors(result.errors);
     setValidated(result.ok);
   }
@@ -133,7 +134,7 @@ export function DesignSystemPage() {
         <section className="section">
           <SectionHeader
             title="Formulário com validação"
-            description="Mesmas regras que o briefing do Content Studio usará na Fase 2."
+            description="Mesmas regras do briefing do Content Studio."
           />
           <Card>
             <form className="form" onSubmit={handleSubmit} noValidate>
@@ -144,7 +145,7 @@ export function DesignSystemPage() {
                 onChange={(e) => { setSubject(e.target.value); setValidated(false); }}
                 error={errors.subject}
                 hint="Obrigatório. Seja específico sobre o tema central."
-                counter={{ current: subject.trim().length, max: BRIEF_LIMITS.subjectMax }}
+                counter={{ current: subject.trim().length, max: LIMITS.subject.max }}
               />
               <TextArea
                 label="Observações"
@@ -153,7 +154,7 @@ export function DesignSystemPage() {
                 value={notes}
                 onChange={(e) => { setNotes(e.target.value); setValidated(false); }}
                 error={errors.notes}
-                counter={{ current: notes.trim().length, max: BRIEF_LIMITS.notesMax }}
+                counter={{ current: notes.trim().length, max: LIMITS.notes.max }}
               />
               <Select
                 label="Formato"
@@ -171,7 +172,7 @@ export function DesignSystemPage() {
               </div>
               {validated && (
                 <Alert tone="success" title="Briefing válido.">
-                  A validação passou. Nada foi salvo: a persistência chega na Fase 5.
+                  A validação passou. Este formulário é apenas demonstrativo e não salva nada.
                 </Alert>
               )}
             </form>

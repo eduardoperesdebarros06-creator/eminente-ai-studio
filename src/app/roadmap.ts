@@ -13,13 +13,13 @@ export const ROADMAP: readonly RoadmapPhase[] = [
     phase: 1,
     title: 'Fundação',
     summary: 'Interface navegável, design system e dashboard.',
-    state: 'current',
+    state: 'done',
   },
   {
     phase: 2,
     title: 'Conteúdo',
     summary: 'Criação e edição com templates e texto de IA externa.',
-    state: 'next',
+    state: 'current',
   },
   {
     phase: 3,

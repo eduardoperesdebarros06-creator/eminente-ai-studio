@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { AppShell } from '../components/layout/AppShell';
 import { ErrorBoundary } from '../components/layout/ErrorBoundary';
+import { ConfirmProvider, ToastProvider } from '../components/ui';
 import { CarouselStudioPage } from '../features/carousel/CarouselStudioPage';
 import { ContentStudioPage } from '../features/content/ContentStudioPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
@@ -40,10 +41,14 @@ export function App() {
   }, [route.id, label]);
 
   return (
-    <AppShell activeRoute={route.id} section={label}>
-      <ErrorBoundary resetKey={route.path}>
-        {Page ? <Page /> : <NotFoundPage path={route.path} />}
-      </ErrorBoundary>
-    </AppShell>
+    <ToastProvider>
+      <ConfirmProvider>
+        <AppShell activeRoute={route.id} section={label}>
+          <ErrorBoundary resetKey={route.path}>
+            {Page ? <Page /> : <NotFoundPage path={route.path} />}
+          </ErrorBoundary>
+        </AppShell>
+      </ConfirmProvider>
+    </ToastProvider>
   );
 }
