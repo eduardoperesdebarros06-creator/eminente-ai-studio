@@ -1,3 +1,5 @@
+import type { DesignSettings } from '../design/settings';
+
 export type ContentFormat = 'post' | 'carousel' | 'motion';
 export type Objective = 'awareness' | 'engagement' | 'conversion' | 'authority';
 export type Tone = 'executive' | 'didactic' | 'inspiring' | 'provocative';
@@ -42,6 +44,8 @@ export interface ContentDraft {
   caption: string;
   cta: string;
   hashtags: string[];
+  /** Aparência das peças (formato, tema, assinatura). Usado pelos estúdios visuais. */
+  design: DesignSettings;
 }
 
 export const FORMAT_LABELS: Record<ContentFormat, string> = {

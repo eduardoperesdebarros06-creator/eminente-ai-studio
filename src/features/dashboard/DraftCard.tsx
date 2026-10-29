@@ -1,16 +1,15 @@
-import { useState } from 'react';
 import { ArrowRight, FolderOpen, PenLine } from 'lucide-react';
 import { totalDuration } from '../../domain/content/draft';
 import { FORMAT_LABELS } from '../../domain/content/types';
 import { Badge, ButtonLink, Card, EmptyState } from '../../components/ui';
-import { peekDraft } from '../content/draftStorage';
+import { useContentDraft } from '../content/useContentDraft';
 import { unitNames } from '../content/PagesEditor';
 
 /** Mostra o rascunho em andamento (se houver). Projetos salvos chegam na Fase 5. */
 export function DraftCard() {
-  const [draft] = useState(peekDraft);
+  const { draft } = useContentDraft();
 
-  if (!draft || (draft.pages.length === 0 && !draft.brief.subject.trim())) {
+  if (draft.pages.length === 0 && !draft.brief.subject.trim()) {
     return (
       <Card padding="none">
         <EmptyState

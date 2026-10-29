@@ -19,13 +19,13 @@ export const ROADMAP: readonly RoadmapPhase[] = [
     phase: 2,
     title: 'Conteúdo',
     summary: 'Criação e edição com templates e texto de IA externa.',
-    state: 'current',
+    state: 'done',
   },
   {
     phase: 3,
     title: 'Posts e carrosséis',
     summary: 'Pré-visualização e exportação PNG real.',
-    state: 'next',
+    state: 'current',
   },
   {
     phase: 4,

@@ -10,3 +10,4 @@ export { Spinner } from './Spinner';
 export { ConfirmProvider, useConfirm, type ConfirmOptions } from './ConfirmDialog';
 export { Segmented, type SegmentedOption } from './Segmented';
 export { ToastProvider, useToast } from './Toast';
+export { Switch } from './Switch';

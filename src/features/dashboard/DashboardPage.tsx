@@ -4,7 +4,7 @@ import { ROADMAP } from '../../app/roadmap';
 import { useLinkProps } from '../../app/router';
 import { Badge, ButtonLink, Card, SectionHeader } from '../../components/ui';
 import { cx } from '../../lib/cx';
-import { OUTPUT_FORMATS } from '../formats';
+import { OUTPUT_FORMATS } from '../../domain/design/formats';
 import { ModuleStatusBadge } from '../shared/ModuleStatusBadge';
 import { DraftCard } from './DraftCard';
 import { QuickStart } from './QuickStart';

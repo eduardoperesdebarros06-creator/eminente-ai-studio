@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { Eye, FilePlus2, FolderOpen, PencilLine, PenLine } from 'lucide-react';
+import { ArrowRight, Eye, FilePlus2, FolderOpen, PencilLine, PenLine } from 'lucide-react';
 import { clearHashQuery, readHashQuery } from '../../app/router';
 import {
   Alert,
   Badge,
   Button,
+  ButtonLink,
   Card,
   EmptyState,
   PageHeader,
@@ -26,6 +27,7 @@ import { IssuesSummary } from './IssuesSummary';
 import { MetaEditor } from './MetaEditor';
 import { PagesEditor, unitNames } from './PagesEditor';
 import { SourcePanel } from './SourcePanel';
+import { acknowledgeRecovery, consumeRecoveryNotice } from './draftStore';
 import { useContentDraft, type SaveState } from './useContentDraft';
 
 type View = 'edit' | 'preview';
@@ -59,7 +61,7 @@ export function ContentStudioPage() {
   const toast = useToast();
   const [view, setView] = useState<View>('edit');
   const [showBriefErrors, setShowBriefErrors] = useState(false);
-  const [recoveryNotice, setRecoveryNotice] = useState(recovery === 'corrupt' || recovery === 'unavailable');
+  const recoveryNotice = recovery === 'corrupt' || recovery === 'unavailable';
   const fileInput = useRef<HTMLInputElement>(null);
 
   const briefCheck = useMemo(() => validateBrief(draft.brief), [draft.brief]);
@@ -86,11 +88,9 @@ export function ContentStudioPage() {
     dispatch({ type: 'brief/set', brief: { ...draft.brief, subject } });
   }, [dispatch, draft.brief, hasContent, toast]);
 
-  const announcedRecovery = useRef(false);
   useEffect(() => {
-    if (announcedRecovery.current) return;
-    announcedRecovery.current = true;
-    if (recovery === 'restored' && hasContent) {
+    // Avisa uma única vez por sessão do app, não a cada visita ao módulo.
+    if (consumeRecoveryNotice() === 'restored' && hasContent) {
       toast({ tone: 'info', title: 'Rascunho anterior recuperado.' });
     }
     // Apenas na montagem: o aviso se refere ao estado encontrado ao abrir o módulo.
@@ -224,7 +224,7 @@ export function ContentStudioPage() {
                 ? 'O rascunho salvo estava corrompido e não pôde ser recuperado.'
                 : 'O armazenamento do navegador está indisponível.'
             }
-            actions={<Button size="sm" onClick={() => setRecoveryNotice(false)}>Entendi</Button>}
+            actions={<Button size="sm" onClick={acknowledgeRecovery}>Entendi</Button>}
           >
             {recovery === 'corrupt'
               ? 'Um novo rascunho foi iniciado. Os dados originais foram preservados no navegador sob a chave "eminente:contentDraft.corrupt".'
@@ -287,6 +287,14 @@ export function ContentStudioPage() {
                 />
                 <ExportActions draft={draft} validation={validation} />
               </div>
+              {format !== 'motion' && (
+                <div className="studio__next">
+                  <span>Texto pronto? Gere as imagens da peça.</span>
+                  <ButtonLink to={format === 'post' ? '/design' : '/carousel'} variant="primary" size="sm" iconRight={ArrowRight}>
+                    Diagramar no {format === 'post' ? 'Design Studio' : 'Carousel Studio'}
+                  </ButtonLink>
+                </div>
+              )}
               <IssuesSummary validation={validation} />
               {view === 'edit' ? (
                 <div className="stack">

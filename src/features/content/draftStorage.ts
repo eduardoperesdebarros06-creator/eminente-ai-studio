@@ -1,7 +1,7 @@
 import { createDraft } from '../../domain/content/draft';
 import { deserializeDraft, serializeDraft } from '../../domain/content/serialize';
 import type { ContentDraft } from '../../domain/content/types';
-import { readStored, removeStored, writeStored } from '../../lib/storage';
+import { readStored, writeStored } from '../../lib/storage';
 
 /**
  * Rascunho em andamento, salvo no navegador. É uma proteção contra perda
@@ -33,16 +33,7 @@ export function loadDraft(): { draft: ContentDraft; recovery: DraftRecovery } {
   }
 }
 
-/** Leitura sem efeitos colaterais, para o dashboard. */
-export function peekDraft(): ContentDraft | null {
-  const stored = readStored(KEY);
-  return stored.status === 'ok' ? deserializeDraft(stored.value) : null;
-}
-
 export function saveDraft(draft: ContentDraft): boolean {
   return writeStored(KEY, serializeDraft(draft));
 }
 
-export function clearDraft(): void {
-  removeStored(KEY);
-}

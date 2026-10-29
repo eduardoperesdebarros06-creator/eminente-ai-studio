@@ -1,3 +1,4 @@
+import { readDesign } from '../design/settings';
 import { LIMITS } from './limits';
 import { isFormat, isObjective, isRole, isTone, type Brief, type ContentDraft, type ContentPage, type DraftSource } from './types';
 
@@ -52,5 +53,7 @@ export function deserializeDraft(v: unknown): ContentDraft | null {
     caption: v.caption,
     cta: v.cta,
     hashtags: v.hashtags,
+    // Rascunhos da Fase 2 não têm `design`: recebem os valores padrão.
+    design: readDesign(v.design),
   };
 }

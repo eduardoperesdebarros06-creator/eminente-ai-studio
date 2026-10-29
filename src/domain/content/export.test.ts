@@ -41,6 +41,18 @@ describe('serialização (recuperação de rascunho)', () => {
     expect(deserializeDraft(JSON.parse(serializeDraft(d)))).toEqual(d);
   });
 
+  it('abre rascunho antigo (sem design) com o design padrão', () => {
+    const { design: _omit, ...old } = sample();
+    void _omit;
+    const opened = deserializeDraft(JSON.parse(JSON.stringify(old)));
+    expect(opened?.design).toEqual({ formatId: 'portrait', themeId: 'carvao', handle: '@eminente', showPageNumbers: true, showSwipeHint: true });
+  });
+
+  it('corrige campos de design inválidos individualmente', () => {
+    const d = { ...sample(), design: { formatId: 'xxx', themeId: 'papel', handle: 42, showPageNumbers: false } };
+    expect(deserializeDraft(JSON.parse(JSON.stringify(d)))?.design).toMatchObject({ formatId: 'portrait', themeId: 'papel', handle: '@eminente', showPageNumbers: false });
+  });
+
   it.each([
     ['nulo', null],
     ['versão desconhecida', { ...sample(), schemaVersion: 2 }],

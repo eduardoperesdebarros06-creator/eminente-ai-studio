@@ -1,18 +1,22 @@
 /** Operações de arquivo e área de transferência no navegador. */
 
-/** Gera um arquivo real e dispara o download pelo navegador. */
-export function downloadText(fileName: string, content: string, mime: string): void {
-  const blob = new Blob([content], { type: `${mime};charset=utf-8` });
+/** Dispara o download de um arquivo real pelo navegador. */
+export function downloadBlob(name: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = fileName;
+  a.download = name;
   a.rel = 'noopener';
   document.body.appendChild(a);
   a.click();
   a.remove();
   // Revoga depois que o navegador iniciou o download.
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+/** Gera um arquivo de texto e dispara o download. */
+export function downloadText(fileName: string, content: string, mime: string): void {
+  downloadBlob(fileName, new Blob([content], { type: `${mime};charset=utf-8` }));
 }
 
 /** Copia texto; usa a API moderna e recorre ao método legado se necessário. */

@@ -1,3 +1,4 @@
+import { DEFAULT_DESIGN, HANDLE_MAX, type DesignSettings } from '../design/settings';
 import { EMPTY_BRIEF } from './brief';
 import { parseHashtags } from './hashtags';
 import { createId } from './id';
@@ -23,6 +24,7 @@ export function createDraft(brief: Brief = EMPTY_BRIEF, now = new Date()): Conte
     caption: '',
     cta: '',
     hashtags: [],
+    design: { ...DEFAULT_DESIGN },
   };
 }
 
@@ -94,6 +96,7 @@ export type DraftAction =
   | { type: 'page/move'; id: string; direction: -1 | 1 }
   | { type: 'meta/set'; patch: Partial<Pick<ContentDraft, 'caption' | 'cta'>> }
   | { type: 'hashtags/set'; value: string }
+  | { type: 'design/set'; patch: Partial<DesignSettings> }
   | { type: 'draft/replace'; draft: ContentDraft }
   | { type: 'draft/reset' };
 
@@ -198,11 +201,18 @@ export function draftReducer(draft: ContentDraft, action: DraftAction, now = new
     case 'hashtags/set':
       return touch(draft, { hashtags: parseHashtags(action.value) }, now);
 
+    case 'design/set': {
+      const patch = { ...action.patch };
+      if (patch.handle !== undefined) patch.handle = patch.handle.slice(0, HANDLE_MAX);
+      return touch(draft, { design: { ...draft.design, ...patch } }, now);
+    }
+
     case 'draft/replace':
       return action.draft;
 
     case 'draft/reset':
-      return createDraft({ ...EMPTY_BRIEF, format: draft.brief.format }, now);
+      // Preferências visuais (tema, assinatura) sobrevivem a um novo conteúdo.
+      return { ...createDraft({ ...EMPTY_BRIEF, format: draft.brief.format }, now), design: draft.design };
   }
 }
 
