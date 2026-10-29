@@ -45,7 +45,7 @@ describe('serialização (recuperação de rascunho)', () => {
     const { design: _omit, ...old } = sample();
     void _omit;
     const opened = deserializeDraft(JSON.parse(JSON.stringify(old)));
-    expect(opened?.design).toEqual({ formatId: 'portrait', themeId: 'carvao', handle: '@eminente', showPageNumbers: true, showSwipeHint: true });
+    expect(opened?.design).toEqual({ formatId: 'portrait', themeId: 'carvao', handle: '@eminente', showPageNumbers: true, showSwipeHint: true, fps: 30, transition: 'fade' });
   });
 
   it('corrige campos de design inválidos individualmente', () => {
