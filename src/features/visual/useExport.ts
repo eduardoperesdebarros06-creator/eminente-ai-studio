@@ -5,6 +5,7 @@ import { slideFileName, type Scene } from '../../domain/design/layout';
 import { downloadBlob } from '../../lib/files';
 import { renderScenePng } from '../../render/png';
 import { downloadAll, pickFolder, SaveCancelled, writeToFolder, zipFiles, type OutputFile } from '../../render/save';
+import { recordExport } from '../library/librarySync';
 
 export type ExportMode = 'current' | 'download' | 'folder' | 'zip';
 
@@ -68,16 +69,21 @@ export function useExport(draft: ContentDraft, scenes: readonly Scene[]) {
 
         if (folder) {
           setState({ status: 'done', files: produced, destination: `Pasta “${folder.name}”` });
+          void recordExport(draft, produced.map((f) => ({ kind: 'png' as const, ...f })));
         } else if (mode === 'zip') {
           setState({ status: 'running', done: total, total, step: 'Compactando .zip' });
           const zipName = `${base}-${scenes[0]!.width}x${scenes[0]!.height}.zip`;
-          downloadBlob(zipName, await zipFiles(files));
+          const zip = await zipFiles(files);
+          downloadBlob(zipName, zip);
           setState({ status: 'done', files: produced, destination: 'Downloads do navegador (.zip)', zipName });
+          const first = produced[0];
+          void recordExport(draft, [{ kind: 'zip', name: zipName, bytes: zip.size, width: first?.width, height: first?.height }]);
         } else {
           setState({ status: 'running', done: total, total, step: 'Iniciando downloads' });
           if (files.length === 1) downloadBlob(files[0]!.name, files[0]!.blob);
           else await downloadAll(files);
           setState({ status: 'done', files: produced, destination: 'Downloads do navegador' });
+          void recordExport(draft, produced.map((f) => ({ kind: 'png' as const, ...f })));
         }
       } catch (e) {
         if (e instanceof SaveCancelled) setState({ status: 'idle' });

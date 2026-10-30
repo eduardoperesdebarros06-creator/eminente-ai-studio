@@ -1,0 +1,273 @@
+/* ============ Biblioteca (Fase 5) ============ */
+.lib-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.lib-toolbar__search {
+  position: relative;
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+.lib-toolbar__search .field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.lib-toolbar__search .input {
+  padding-left: 34px;
+}
+.lib-toolbar__search-icon {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lib {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+.lib--with-detail {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+}
+.lib-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+.lib--with-detail .lib-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.lib-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.lib-card:hover {
+  border-color: var(--color-border-strong);
+}
+.lib-card--selected {
+  border-color: var(--color-accent-border);
+  box-shadow: 0 0 0 1px var(--color-accent-border);
+}
+.lib-card__body {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  cursor: pointer;
+  flex: 1;
+}
+.lib-card__body:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+.lib-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.lib-card__title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+.lib-card__meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.lib-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-divider);
+  background: var(--color-surface-2);
+}
+
+.lib-detail {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-4));
+  max-height: calc(100vh - var(--topbar-height) - var(--space-8));
+  overflow-y: auto;
+}
+.lib-detail__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-divider);
+}
+.lib-detail__title {
+  margin: var(--space-1) 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+.lib-detail__meta,
+.lib-detail__hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+.lib-detail__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+.lib-detail__section + .lib-detail__section {
+  border-top: 1px solid var(--color-divider);
+}
+.lib-detail__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.lib-versions,
+.lib-exports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.lib-versions__item,
+.lib-exports__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.lib-versions__item--latest {
+  border-color: var(--color-accent-border);
+}
+.lib-versions__num,
+.lib-exports__kind {
+  flex: none;
+  min-width: 36px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  font-weight: var(--weight-semibold);
+}
+.lib-versions__main,
+.lib-exports__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.lib-versions__label {
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.lib-versions__meta,
+.lib-exports__meta {
+  font-size: var(--text-2xs);
+  color: var(--color-text-muted);
+}
+.lib-exports__name,
+.lib-exports__path {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+.lib-exports__path {
+  color: var(--color-text-muted);
+}
+
+.lib-health {
+  margin-top: var(--space-8);
+}
+.lib-health__list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+}
+.lib-health__list div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--space-3);
+}
+.lib-health__list dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.lib-health__list dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+/* ============ Configurações (Fase 5) ============ */
+.settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.settings__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.settings__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-5);
+}
+
+@media (max-width: 1100px) {
+  .lib--with-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lib-detail {
+    position: static;
+    max-height: none;
+  }
+}
+@media (max-width: 640px) {
+  .lib-health__list div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}

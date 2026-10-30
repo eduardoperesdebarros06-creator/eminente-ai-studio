@@ -1,4 +1,5 @@
-import { ChevronRight, HardDrive, Plus } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
+import { SyncBadge } from '../../features/library/SyncBadge';
 import { ButtonLink } from '../ui';
 
 export function Topbar({ section }: { section: string }) {
@@ -10,10 +11,7 @@ export function Topbar({ section }: { section: string }) {
         <span className="topbar__crumb-current">{section}</span>
       </nav>
       <div className="topbar__actions">
-        <span className="topbar__local" title="Tudo roda nesta máquina. Nenhum serviço externo é usado.">
-          <HardDrive size={14} aria-hidden />
-          Local
-        </span>
+        <SyncBadge />
         <ButtonLink to="/content" variant="primary" size="sm" icon={Plus}>
           Novo conteúdo
         </ButtonLink>

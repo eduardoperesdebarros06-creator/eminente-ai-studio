@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ContentDraft } from '../../domain/content/types';
 import { isFinished, type JobStatus, type RenderHealth } from '../../domain/motion/api';
+import { api } from '../../lib/api';
 
 export type HealthState =
   | { status: 'loading' }
@@ -8,20 +9,6 @@ export type HealthState =
   | { status: 'offline'; message: string };
 
 const POLL_MS = 500;
-
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(url, init);
-  } catch {
-    throw new Error('Servidor local indisponível. Inicie o estúdio com "npm run dev".');
-  }
-  const body = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!res.ok || body === null) {
-    throw new Error(body?.error ?? `O servidor respondeu ${res.status}. Inicie o estúdio com "npm run dev" (não apenas "vite").`);
-  }
-  return body;
-}
 
 /** Diagnóstico das ferramentas e acompanhamento da renderização no servidor local. */
 export function useRenderJob() {

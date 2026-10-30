@@ -4,7 +4,7 @@ import { mkdir, rename, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright';
 import type { ContentDraft } from '../src/domain/content/types';
-import type { JobStatus, MotionRenderBridge } from '../src/domain/motion/api';
+import type { JobStatus, MotionRenderBridge, RenderedVideo } from '../src/domain/motion/api';
 import { motionPlan } from '../src/domain/motion/plan';
 import { checkVideo, parseProbe, videoFileName, type VideoSpec } from '../src/domain/motion/video';
 import { browserLaunch, FFMPEG, FFPROBE, run } from './tools';
@@ -47,7 +47,10 @@ function write(stream: NodeJS.WritableStream, chunk: Buffer): Promise<void> {
  * 3. confere o arquivo com o ffprobe (resolução, FPS, quadros e duração);
  * 4. só então move o arquivo do nome temporário para o final.
  */
-export function startMotionJob(draft: ContentDraft, opts: { appOrigin: string; exportsDir: string }): MotionJob {
+export function startMotionJob(
+  draft: ContentDraft,
+  opts: { appOrigin: string; exportsDir: string; onDone?: (file: RenderedVideo) => void },
+): MotionJob {
   const { spec, timeline } = motionPlan(draft);
   const name = videoFileName(draft.brief.subject, spec);
   const finalPath = path.join(opts.exportsDir, name);
@@ -149,6 +152,7 @@ export function startMotionJob(draft: ContentDraft, opts: { appOrigin: string; e
     status.file = { name, path: finalPath, bytes: size, spec, probe };
     status.state = 'done';
     status.message = 'Vídeo pronto e conferido.';
+    opts.onDone?.(status.file);
   }
 
   work()

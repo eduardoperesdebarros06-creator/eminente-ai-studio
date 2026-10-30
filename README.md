@@ -12,11 +12,11 @@ sem hospedagem e sem APIs pagas.
 | 2 | Content Studio (templates + texto de IA externa) | **Implementada** |
 | 3 | Posts e carrosséis com exportação PNG | **Implementada** |
 | 4 | Motion: quadros via Playwright + MP4 via FFmpeg | **Implementada** |
-| 5 | SQLite, biblioteca, histórico e recuperação | Planejada |
+| 5 | SQLite, biblioteca, histórico e recuperação | **Implementada** |
 | 6 | Integração opcional com Ollama | Planejada |
 
-Os módulos das fases 5–6 aparecem na interface com o selo **“Não implementado”**
-e a fase prevista. Nenhuma exportação é simulada.
+O que é da Fase 6 aparece na interface com o selo **“Não implementado”** e a
+fase prevista. Nenhuma exportação é simulada.
 
 O que já gera arquivos de verdade:
 
@@ -25,7 +25,8 @@ O que já gera arquivos de verdade:
   página no caso de carrosséis.
 - **Motion Studio:** vídeo MP4 (H.264) conferido com o `ffprobe`.
 
-A biblioteca de projetos (SQLite) chega na Fase 5.
+Todo projeto fica salvo na **Biblioteca** (SQLite, nesta máquina), com
+histórico de versões e a lista dos arquivos exportados.
 
 ## Content Studio (Fase 2)
 
@@ -84,9 +85,9 @@ Os nomes seguem o padrão `eminente-carrossel-<assunto>-01-capa-1080x1350.png`.
 
 **Rascunho automático:** o conteúdo em andamento (texto e aparência) fica em
 memória, compartilhado por todos os estúdios, e é copiado para o navegador
-(`localStorage`) a cada alteração. Ao reabrir o app, ele é recuperado. Isso protege contra
-perda acidental, mas não substitui a biblioteca da Fase 5. Se o navegador
-bloquear o armazenamento, o estúdio avisa; nesse caso, baixe o `.json`. Um
+(`localStorage`) a cada alteração. Ao reabrir o app, ele é recuperado. Além
+disso, o projeto vai para a Biblioteca (veja a Fase 5), que sobrevive a limpar
+o navegador. Se o navegador bloquear o armazenamento, o estúdio avisa. Um
 rascunho corrompido nunca é carregado: o estúdio recomeça e guarda uma cópia
 dos dados originais na chave `eminente:contentDraft.corrupt`.
 
@@ -126,9 +127,59 @@ Os vídeos ficam em `exports/` (ex.:
 baixa pelo navegador. Para gravar em outra pasta, defina `EMINENTE_EXPORTS_DIR`.
 Uma renderização por vez; 11 s em 30 fps levam cerca de 30 s.
 
+## Biblioteca e Configurações (Fase 5)
+
+**Biblioteca** (menu lateral): todos os projetos, salvos automaticamente num
+banco SQLite nesta máquina.
+
+- **Gravação automática:** cada alteração no rascunho é enviada à biblioteca
+  (cerca de 1,5 s depois). A barra superior mostra “Salvo HH:MM”. Rascunhos
+  vazios não viram projeto.
+- **Versões:** gravações automáticas dentro de 10 minutos viram uma versão só;
+  depois disso, uma nova. Ficam as 30 automáticas mais recentes por projeto.
+  **Salvar versão** (Content Studio) cria uma versão com nome que nunca é
+  apagada automaticamente. Antes de trocas grandes (aplicar template, começar
+  em branco, importar IA, mudar de formato perdendo páginas) o estúdio salva
+  sozinho uma versão “Antes de: …”.
+- **Restaurar** uma versão cria uma versão nova com o conteúdo antigo: nada é
+  sobrescrito.
+- **Arquivos exportados por projeto:** PNG, `.zip`, `.md`, `.json` (baixados
+  pelo navegador: nome, tamanho e dimensões) e MP4 (com o caminho no disco e
+  botão **Baixar**).
+- **Abrir, Duplicar e Lixeira:** abrir troca o rascunho aberto pelo projeto
+  (o atual fica salvo antes). A lixeira pode ser desfeita; **Apagar de vez** só
+  vale para projetos na lixeira e não apaga arquivos já exportados.
+- **Novo conteúdo** não descarta mais nada: o anterior fica na Biblioteca.
+
+**Recuperação:**
+
+- Limpou os dados do navegador ou trocou de navegador? O dashboard oferece
+  **Reabrir** o último projeto da Biblioteca.
+- Servidor fora do ar: o rascunho continua no navegador, a barra superior mostra
+  “Sem biblioteca” e o envio é refeito sozinho quando o servidor volta.
+- Cópia de segurança do banco a cada início do estúdio (as 5 últimas, em
+  `data/backups/`) e sob demanda em **Fazer cópia agora**.
+- Banco danificado: na abertura o estúdio confere a integridade; se falhar, o
+  arquivo é **guardado** como `biblioteca.db.corrompido-<data>` (não apagado),
+  um banco novo é criado e a Biblioteca mostra o aviso. Para voltar a uma cópia
+  de segurança: feche o estúdio, copie o arquivo de `data/backups/` para
+  `data/biblioteca.db` e abra de novo.
+
+Os dados ficam em `data/biblioteca.db` dentro da pasta do projeto (já fora do
+git). Para usar outra pasta, defina `EMINENTE_DATA_DIR`.
+
+**Configurações:**
+
+- **Pasta dos vídeos (MP4):** caminho completo; a pasta é criada e testada antes
+  de salvar. Vazio = `exports/` do projeto.
+- **Padrões para novo conteúdo:** formato inicial, proporção, tema, assinatura,
+  numeração, “Arraste →”, fps e transição do motion.
+- **Diagnóstico:** FFmpeg, ffprobe, navegador de renderização e SQLite.
+- **IA local (Ollama):** reservado para a Fase 6.
+
 ## Requisitos (Windows)
 
-- **Node.js 22.12 ou superior** (LTS) — <https://nodejs.org>. Durante a
+- **Node.js 22.13 ou superior** (LTS) — <https://nodejs.org>. Durante a
   instalação, mantenha marcada a opção que adiciona o Node ao `PATH`.
 - **FFmpeg** (inclui o `ffprobe`), para exportar MP4:
 
@@ -214,6 +265,8 @@ src/
                   das cenas (layout puro, sem DOM: reaproveitado pelo motion)
   domain/motion/  Linha do tempo, transições e entrada dos elementos (puro, sem DOM),
                   especificação/conferência do MP4 e contrato da API de renderização
+  domain/library/ Contrato da biblioteca e regras puras: título, "tem conteúdo",
+                  comparação de conteúdo, agrupamento de versões, configurações
   render/         Desenho das cenas em Canvas, geração/verificação de PNG e gravação
                   (pasta, downloads, .zip); quadros do motion e a página interna
                   usada pelo Playwright (motionPage.ts, carregada por render.html)
@@ -225,13 +278,15 @@ src/
                   layout e páginas
 server/           Servidor local (Express): serve a interface e a API de motion —
                   diagnóstico das ferramentas, fila de renderização com progresso e
-                  cancelamento, Playwright → FFmpeg → ffprobe e download do MP4
+                  cancelamento, Playwright → FFmpeg → ffprobe e download do MP4 —
+                  e a biblioteca (db.ts: SQLite; libraryRoutes.ts: API de
+                  projetos, versões, exportações e configurações)
 render.html       Página interna aberta pelo Playwright para desenhar os quadros
+data/             Banco da biblioteca e cópias de segurança (criado ao rodar; fora do git)
 ```
 
-Acesso ao sistema de arquivos e programas externos (Playwright, FFmpeg) fica só
-no servidor, nunca no frontend. A persistência SQLite da Fase 5 também vai para
-`server/`.
+Acesso ao sistema de arquivos, ao banco e a programas externos (Playwright,
+FFmpeg) fica só no servidor, nunca no frontend.
 
 ## Decisões técnicas
 
@@ -252,8 +307,16 @@ no servidor, nunca no frontend. A persistência SQLite da Fase 5 também vai par
   Edge do Windows (`channel: msedge`): nenhum download extra é obrigatório.
 - **Sem shell**: FFmpeg e ffprobe são chamados com argumentos separados
   (`spawn`), nunca por uma linha de comando montada com texto do usuário.
+- **SQLite embutido no Node** (`node:sqlite`): nenhuma dependência nativa para
+  compilar no Windows. Por isso o mínimo é o Node 22.13 (no Node 22 o terminal
+  mostra um aviso de “recurso experimental”, que pode ser ignorado). WAL,
+  transações por gravação, `integrity_check` na abertura e esquema versionado
+  (`PRAGMA user_version`); um banco de versão mais nova do estúdio é recusado
+  em vez de ser alterado.
+- **Duas camadas de proteção do rascunho:** `localStorage` (instantâneo, por
+  navegador) e Biblioteca (por máquina, com histórico).
 - **Preferências de interface** (ex.: menu recolhido) ficam em `localStorage`;
-  dados de projeto irão para SQLite na Fase 5.
+  projetos e configurações, no SQLite.
 
 ## Testes
 
@@ -276,7 +339,16 @@ no servidor, nunca no frontend. A persistência SQLite da Fase 5 também vai par
 - linha do tempo do motion: duração total, número de quadros, transições
   centradas (esmaecer, deslizar, corte), entrada dos elementos e limites;
 - leitura da saída do `ffprobe` e conferência do MP4 (codec, pixel, resolução,
-  FPS, quadros, duração) e nomes de arquivo seguros.
+  FPS, quadros, duração) e nomes de arquivo seguros;
+- biblioteca (banco real em pasta temporária): criação de projeto, conteúdo
+  igual sem versão nova, agrupamento das automáticas, manuais preservadas,
+  limite de automáticas, restauração, lixeira e exclusão, exportações,
+  configurações inválidas corrigidas;
+- recuperação: projetos sobrevivem a fechar e reabrir o banco, banco corrompido
+  guardado de lado com aviso, cópia de segurança abre com os mesmos projetos,
+  rodízio das cópias e recusa de esquema mais novo;
+- API da biblioteca num servidor real: gravar, listar, abrir, restaurar,
+  rascunho vazio, entradas inválidas, lixeira, exportações e pasta dos vídeos.
 
 Além dos testes automatizados, cada fase foi verificada num Chromium real
 (Playwright). Na Fase 3, os PNGs baixados foram conferidos com `ffprobe`, o
@@ -285,4 +357,9 @@ pixel. Na Fase 4, foram gerados MP4 reais no Windows (FFmpeg 9.0.2, Edge) em
 24, 30 e 60 fps com as três transições, conferidos pelo `ffprobe`; quadros de
 cada transição foram extraídos e inspecionados; o cancelamento no meio não deixou
 arquivo; e a API recusou nomes de arquivo fora da pasta e chamadas de outra
-origem.
+origem. Na Fase 5, no navegador, com um banco descartável: o projeto apareceu
+sozinho na Biblioteca, a versão com nome foi gravada, “Novo conteúdo” guardou o
+anterior, os dados do navegador foram apagados e o projeto foi reaberto pelo
+dashboard sem perda, uma versão foi restaurada, a pasta relativa foi recusada,
+os padrões salvos valeram no conteúdo novo e um MP4 renderizado ficou
+registrado no projeto.

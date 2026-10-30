@@ -1,7 +1,7 @@
 /**
  * Armazenamento no navegador (localStorage). Usado para preferências de
- * interface e para o rascunho em andamento do Content Studio. Projetos e
- * histórico irão para SQLite na Fase 5.
+ * interface e para a cópia instantânea do rascunho em andamento. Projetos e
+ * histórico ficam na biblioteca (SQLite, no servidor local).
  */
 const PREFIX = 'eminente:';
 

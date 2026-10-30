@@ -98,7 +98,8 @@ export type DraftAction =
   | { type: 'hashtags/set'; value: string }
   | { type: 'design/set'; patch: Partial<DesignSettings> }
   | { type: 'draft/replace'; draft: ContentDraft }
-  | { type: 'draft/reset' };
+  /** `defaults` vem das Configurações; sem ele, mantém o formato e a aparência atuais. */
+  | { type: 'draft/reset'; defaults?: { format: ContentFormat; design: DesignSettings } };
 
 function touch(draft: ContentDraft, patch: Partial<ContentDraft>, now: Date): ContentDraft {
   return { ...draft, ...patch, updatedAt: now.toISOString() };
@@ -211,6 +212,9 @@ export function draftReducer(draft: ContentDraft, action: DraftAction, now = new
       return action.draft;
 
     case 'draft/reset':
+      if (action.defaults) {
+        return { ...createDraft({ ...EMPTY_BRIEF, format: action.defaults.format }, now), design: { ...action.defaults.design } };
+      }
       // Preferências visuais (tema, assinatura) sobrevivem a um novo conteúdo.
       return { ...createDraft({ ...EMPTY_BRIEF, format: draft.brief.format }, now), design: draft.design };
   }

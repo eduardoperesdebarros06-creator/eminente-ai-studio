@@ -31,13 +31,13 @@ export const ROADMAP: readonly RoadmapPhase[] = [
     phase: 4,
     title: 'Motion',
     summary: 'Cenas animadas, quadros via Playwright e MP4 via FFmpeg.',
-    state: 'current',
+    state: 'done',
   },
   {
     phase: 5,
     title: 'Persistência',
     summary: 'SQLite, biblioteca, histórico e testes de recuperação.',
-    state: 'next',
+    state: 'current',
   },
   {
     phase: 6,

@@ -5,7 +5,7 @@
   "description": "Eminente AI Studio — estúdio local de conteúdo, design e motion.",
   "type": "module",
   "engines": {
-    "node": ">=22.12"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "tsx server/index.ts",

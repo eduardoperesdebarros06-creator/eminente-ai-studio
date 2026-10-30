@@ -5,8 +5,8 @@ import { readStored, writeStored } from '../../lib/storage';
 
 /**
  * Rascunho em andamento, salvo no navegador. É uma proteção contra perda
- * de trabalho (recarregar, fechar a aba), não a biblioteca de projetos —
- * esta chega com SQLite na Fase 5.
+ * de trabalho (recarregar, fechar a aba). A biblioteca de projetos (SQLite)
+ * recebe uma cópia pela sincronização em `features/library/librarySync.ts`.
  */
 const KEY = 'contentDraft';
 const CORRUPT_KEY = 'contentDraft.corrupt';

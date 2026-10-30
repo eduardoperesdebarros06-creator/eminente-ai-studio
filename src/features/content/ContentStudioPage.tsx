@@ -20,6 +20,9 @@ import { deserializeDraft } from '../../domain/content/serialize';
 import { getTemplate } from '../../domain/content/templates';
 import { FORMAT_LABELS, type Brief, type ContentFormat } from '../../domain/content/types';
 import { readTextFile } from '../../lib/files';
+import { getSyncSnapshot, pushNow, saveNamedVersion } from '../library/librarySync';
+import { SaveVersionButton } from '../library/SaveVersionButton';
+import { useLibrarySync } from '../library/useLibrarySync';
 import { BriefPanel } from './BriefPanel';
 import { ContentPreview } from './ContentPreview';
 import { ExportActions } from './ExportActions';
@@ -57,6 +60,8 @@ function SaveBadge({ state }: { state: SaveState }) {
 
 export function ContentStudioPage() {
   const { draft, dispatch, validation, saveState, recovery } = useContentDraft();
+  const sync = useLibrarySync();
+  const libraryOnline = sync.status !== 'offline' && sync.status !== 'error' && sync.status !== 'starting';
   const confirm = useConfirm();
   const toast = useToast();
   const [view, setView] = useState<View>('edit');
@@ -99,12 +104,26 @@ export function ContentStudioPage() {
   /** Confirma antes de substituir conteúdo existente. */
   async function confirmReplace(action: string): Promise<boolean> {
     if (!hasContent) return true;
-    return confirm({
+    const ok = await confirm({
       title: 'Substituir o conteúdo atual?',
-      description: `${action} substitui ${draft.pages.length === 1 ? 'a página atual' : `as ${draft.pages.length} ${unit.many} atuais`}. Se quiser guardar a versão atual, baixe o .json antes.`,
+      description: `${action} substitui ${draft.pages.length === 1 ? 'a página atual' : `as ${draft.pages.length} ${unit.many} atuais`}. ${
+        libraryOnline ? 'O conteúdo atual fica guardado como versão na Biblioteca.' : 'A Biblioteca está indisponível: se quiser guardar o conteúdo atual, baixe o .json antes.'
+      }`,
       confirmLabel: 'Substituir',
       tone: 'danger',
     });
+    if (ok) await checkpoint(action);
+    return ok;
+  }
+
+  /** Guarda o conteúdo atual como versão antes de uma troca grande (não bloqueia se falhar). */
+  async function checkpoint(action: string) {
+    if (!libraryOnline) return;
+    try {
+      await saveNamedVersion(`Antes de: ${action.charAt(0).toLowerCase()}${action.slice(1)}`);
+    } catch {
+      // Sem conteúdo ou servidor fora do ar: a troca segue, como antes da biblioteca existir.
+    }
   }
 
   function onBriefChange(brief: Brief) {
@@ -125,6 +144,7 @@ export function ContentStudioPage() {
     ) {
       return;
     }
+    if (lost > 0) await checkpoint(`Mudar para ${FORMAT_LABELS[next]}`);
     dispatch({ type: 'format/set', format: next });
   }
 
@@ -151,18 +171,27 @@ export function ContentStudioPage() {
   }
 
   async function newContent() {
+    const started = hasContent || draft.brief.subject.trim();
+    if (started && libraryOnline) {
+      // O atual já está (ou fica agora) salvo na Biblioteca: nada é descartado.
+      await pushNow();
+    }
     if (
-      (hasContent || draft.brief.subject.trim()) &&
+      started &&
+      !(getSyncSnapshot().status === 'saved') &&
       !(await confirm({
         title: 'Começar um novo conteúdo?',
-        description: 'O rascunho atual será descartado. Se quiser guardá-lo, baixe o .json antes.',
+        description: 'A Biblioteca está indisponível, então o rascunho atual será descartado. Se quiser guardá-lo, baixe o .json antes.',
         confirmLabel: 'Descartar e começar',
         tone: 'danger',
       }))
     ) {
       return;
     }
-    dispatch({ type: 'draft/reset' });
+    dispatch({ type: 'draft/reset', defaults: sync.settings?.settings.defaults });
+    if (started && getSyncSnapshot().status === 'saved') {
+      toast({ tone: 'info', title: 'Novo conteúdo iniciado.', description: 'O anterior está guardado na Biblioteca.' });
+    }
     setShowBriefErrors(false);
     setView('edit');
   }
@@ -208,6 +237,7 @@ export function ContentStudioPage() {
             <Button icon={FolderOpen} onClick={() => fileInput.current?.click()}>
               Abrir .json
             </Button>
+            <SaveVersionButton disabled={!hasContent && !draft.brief.subject.trim()} />
             <Button icon={FilePlus2} onClick={newContent}>
               Novo conteúdo
             </Button>
@@ -227,8 +257,10 @@ export function ContentStudioPage() {
             actions={<Button size="sm" onClick={acknowledgeRecovery}>Entendi</Button>}
           >
             {recovery === 'corrupt'
-              ? 'Um novo rascunho foi iniciado. Os dados originais foram preservados no navegador sob a chave "eminente:contentDraft.corrupt".'
-              : 'O rascunho não será salvo automaticamente (modo privado ou bloqueio de dados do site). Baixe o .json para não perder o trabalho.'}
+              ? 'Um novo rascunho foi iniciado. Os dados originais foram preservados no navegador sob a chave "eminente:contentDraft.corrupt". Seus projetos salvos continuam na Biblioteca.'
+              : libraryOnline
+                ? 'O navegador não guarda o rascunho (modo privado ou bloqueio de dados do site), mas a Biblioteca continua salvando o projeto.'
+                : 'O rascunho não será salvo automaticamente (modo privado ou bloqueio de dados do site). Baixe o .json para não perder o trabalho.'}
           </Alert>
         </div>
       )}

@@ -5,6 +5,7 @@ import { serializeDraft } from '../../domain/content/serialize';
 import type { ContentDraft } from '../../domain/content/types';
 import type { DraftValidation } from '../../domain/content/validate';
 import { copyText, downloadText } from '../../lib/files';
+import { recordExport } from '../library/librarySync';
 
 export function ExportActions({ draft, validation }: { draft: ContentDraft; validation: DraftValidation }) {
   const toast = useToast();
@@ -23,8 +24,9 @@ export function ExportActions({ draft, validation }: { draft: ContentDraft; vali
   function download(kind: 'md' | 'json') {
     try {
       const name = exportFileName(draft, kind);
-      if (kind === 'md') downloadText(name, draftToMarkdown(draft), 'text/markdown');
-      else downloadText(name, serializeDraft(draft), 'application/json');
+      const text = kind === 'md' ? draftToMarkdown(draft) : serializeDraft(draft);
+      downloadText(name, text, kind === 'md' ? 'text/markdown' : 'application/json');
+      void recordExport(draft, [{ kind, name, bytes: new TextEncoder().encode(text).length }]);
       toast({ tone: 'success', title: 'Arquivo gerado.', description: `${name} — verifique a pasta de downloads do navegador.` });
     } catch (e) {
       toast({ tone: 'danger', title: 'Falha ao gerar o arquivo.', description: e instanceof Error ? e.message : String(e) });

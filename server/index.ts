@@ -6,12 +6,16 @@ import { deserializeDraft } from '../src/domain/content/serialize';
 import { validateDraft } from '../src/domain/content/validate';
 import { isFinished, type RenderHealth } from '../src/domain/motion/api';
 import { SAFE_VIDEO_NAME } from '../src/domain/motion/video';
+import { hasContent } from '../src/domain/library/library';
+import { Library } from './db';
+import { libraryRouter, resolveExportsDir } from './libraryRoutes';
 import { startMotionJob, type MotionJob } from './motionJob';
 import { checkBrowser, checkFfmpeg, checkFfprobe } from './tools';
 
 /**
  * Servidor local do estúdio: serve a interface (Vite em desenvolvimento, `dist/`
- * em produção) e a API de renderização de motion. Escuta apenas em 127.0.0.1.
+ * em produção), a API de renderização de motion e a biblioteca (SQLite).
+ * Escuta apenas em 127.0.0.1.
  *
  *   tsx server/index.ts          desenvolvimento (Vite com recarga automática)
  *   tsx server/index.ts --prod   produção (requer `npm run build` antes)
@@ -20,9 +24,28 @@ const HOST = '127.0.0.1';
 const PORT = Number(process.env.PORT) || 5173;
 const PROD = process.argv.includes('--prod');
 const ROOT = process.cwd();
-const EXPORTS_DIR = path.resolve(process.env.EMINENTE_EXPORTS_DIR || path.join(ROOT, 'exports'));
+const DEFAULT_EXPORTS_DIR = path.resolve(process.env.EMINENTE_EXPORTS_DIR || path.join(ROOT, 'exports'));
+const DATA_DIR = path.resolve(process.env.EMINENTE_DATA_DIR || path.join(ROOT, 'data'));
 const ORIGIN = `http://${HOST}:${PORT}`;
 const KEEP_JOBS = 10;
+
+let library: Library;
+try {
+  library = new Library(path.join(DATA_DIR, 'biblioteca.db'));
+} catch (e) {
+  console.error(`Não foi possível abrir a biblioteca em ${DATA_DIR}: ${e instanceof Error ? e.message : String(e)}`);
+  process.exit(1);
+}
+if (library.recovered) console.warn(`ATENÇÃO: ${library.recovered}`);
+// Cópia de segurança a cada início (as últimas ficam guardadas).
+if (library.list().length || library.list({ trash: true }).length) {
+  try {
+    library.backup();
+  } catch (e) {
+    console.warn(`Cópia de segurança da biblioteca falhou: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+const exportsDir = () => resolveExportsDir(library, DEFAULT_EXPORTS_DIR);
 
 const app = express();
 const httpServer = createServer(app);
@@ -42,7 +65,7 @@ app.use('/api', express.json({ limit: '1mb' }));
 
 app.get('/api/health', async (_req, res) => {
   const [ffmpeg, ffprobe] = await Promise.all([checkFfmpeg(), checkFfprobe()]);
-  const body: RenderHealth = { ffmpeg, ffprobe, browser: checkBrowser(), exportsDir: EXPORTS_DIR };
+  const body: RenderHealth = { ffmpeg, ffprobe, browser: checkBrowser(), exportsDir: exportsDir() };
   res.json(body);
 });
 
@@ -73,7 +96,28 @@ app.post('/api/motion/jobs', async (req, res) => {
     return;
   }
 
-  const job = startMotionJob(draft, { appOrigin: ORIGIN, exportsDir: EXPORTS_DIR });
+  // O vídeo fica registrado no projeto da biblioteca.
+  let projectId: string | null = null;
+  try {
+    if (hasContent(draft)) {
+      library.save(draft);
+      projectId = draft.id;
+    }
+  } catch (e) {
+    console.warn(`Não foi possível gravar o projeto antes de renderizar: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  const job = startMotionJob(draft, {
+    appOrigin: ORIGIN,
+    exportsDir: exportsDir(),
+    onDone: (file) => {
+      if (!projectId) return;
+      try {
+        library.addExport(projectId, { kind: 'mp4', name: file.name, path: file.path, bytes: file.bytes, width: file.probe.width, height: file.probe.height });
+      } catch (e) {
+        console.warn(`Não foi possível registrar o vídeo na biblioteca: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    },
+  });
   jobs.set(job.status.id, job);
   // Mantém só os últimos trabalhos na memória.
   for (const id of [...jobs.keys()].slice(0, Math.max(0, jobs.size - KEEP_JOBS))) jobs.delete(id);
@@ -101,13 +145,15 @@ app.delete('/api/motion/jobs/:id', (req, res) => {
 
 app.get('/api/motion/files/:name', (req, res) => {
   const name = req.params.name;
-  const file = path.join(EXPORTS_DIR, name);
+  const file = path.join(exportsDir(), name);
   if (!SAFE_VIDEO_NAME.test(name) || !existsSync(file)) {
     res.status(404).json({ error: 'Arquivo não encontrado.' });
     return;
   }
   res.download(file, name);
 });
+
+app.use('/api', libraryRouter(library, { defaultExportsDir: DEFAULT_EXPORTS_DIR }));
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'Rota da API desconhecida.' });
@@ -146,5 +192,17 @@ httpServer.on('error', (e: NodeJS.ErrnoException) => {
 });
 httpServer.listen(PORT, HOST, () => {
   console.log(`\n  Eminente AI Studio${PROD ? '' : ' (desenvolvimento)'}: ${ORIGIN}`);
-  console.log(`  Vídeos exportados em: ${EXPORTS_DIR}\n`);
+  console.log(`  Vídeos exportados em: ${exportsDir()}`);
+  console.log(`  Biblioteca: ${library.file}\n`);
 });
+
+// Fecha o banco com segurança ao encerrar (Ctrl+C).
+for (const sig of ['SIGINT', 'SIGTERM'] as const) {
+  process.once(sig, () => {
+    try {
+      library.close();
+    } finally {
+      process.exit(0);
+    }
+  });
+}
