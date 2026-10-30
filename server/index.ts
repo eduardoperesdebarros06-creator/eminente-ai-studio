@@ -8,6 +8,7 @@ import { isFinished, type RenderHealth } from '../src/domain/motion/api';
 import { SAFE_VIDEO_NAME } from '../src/domain/motion/video';
 import { hasContent } from '../src/domain/library/library';
 import { Library } from './db';
+import { aiRouter } from './aiRoutes';
 import { libraryRouter, resolveExportsDir } from './libraryRoutes';
 import { startMotionJob, type MotionJob } from './motionJob';
 import { checkBrowser, checkFfmpeg, checkFfprobe } from './tools';
@@ -154,6 +155,7 @@ app.get('/api/motion/files/:name', (req, res) => {
 });
 
 app.use('/api', libraryRouter(library, { defaultExportsDir: DEFAULT_EXPORTS_DIR }));
+app.use('/api', aiRouter(library));
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'Rota da API desconhecida.' });

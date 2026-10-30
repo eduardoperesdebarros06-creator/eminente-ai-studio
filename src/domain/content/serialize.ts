@@ -13,7 +13,7 @@ export function serializeDraft(d: ContentDraft): string {
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isStr = (v: unknown): v is string => typeof v === 'string';
-const isSource = (v: unknown): v is DraftSource => v === 'template' || v === 'external-ai' || v === 'manual';
+const isSource = (v: unknown): v is DraftSource => v === 'template' || v === 'external-ai' || v === 'local-ai' || v === 'manual';
 
 function readBrief(v: unknown): Brief | null {
   if (!isObj(v)) return null;

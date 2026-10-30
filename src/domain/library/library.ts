@@ -1,5 +1,6 @@
 import type { ContentDraft, ContentFormat } from '../content/types';
 import { FORMAT_LABELS } from '../content/types';
+import { DEFAULT_AI, readAiSettings, type AiSettings } from '../ai/ai';
 import { readDesign, type DesignSettings } from '../design/settings';
 
 /**
@@ -88,6 +89,8 @@ export interface AppSettings {
   /** Pasta dos MP4. `null` = pasta padrão (`exports/` do projeto). */
   exportsDir: string | null;
   defaults: StudioDefaults;
+  /** IA local (Ollama), Fase 6. */
+  ai: AiSettings;
 }
 
 export interface SettingsView {
@@ -109,6 +112,7 @@ export interface LibraryHealth {
 export const DEFAULT_SETTINGS: AppSettings = {
   exportsDir: null,
   defaults: { format: 'carousel', design: readDesign(undefined) },
+  ai: { ...DEFAULT_AI },
 };
 
 const FORMATS: readonly ContentFormat[] = ['post', 'carousel', 'motion'];
@@ -126,6 +130,7 @@ export function readSettings(v: unknown): AppSettings {
       format: isContentFormat(d.format) ? d.format : DEFAULT_SETTINGS.defaults.format,
       design: readDesign(d.design),
     },
+    ai: readAiSettings(o.ai),
   };
 }
 

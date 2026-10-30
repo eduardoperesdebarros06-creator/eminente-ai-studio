@@ -37,12 +37,12 @@ export const ROADMAP: readonly RoadmapPhase[] = [
     phase: 5,
     title: 'Persistência',
     summary: 'SQLite, biblioteca, histórico e testes de recuperação.',
-    state: 'current',
+    state: 'done',
   },
   {
     phase: 6,
     title: 'IA local',
-    summary: 'Avaliação de integração opcional com Ollama.',
-    state: 'next',
+    summary: 'Integração opcional com Ollama: estrutura gerada por um modelo local.',
+    state: 'current',
   },
 ];

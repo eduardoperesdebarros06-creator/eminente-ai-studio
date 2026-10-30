@@ -89,7 +89,7 @@ export type DraftAction =
   | { type: 'format/set'; format: ContentFormat }
   | { type: 'template/apply'; templateId: string }
   | { type: 'manual/start' }
-  | { type: 'import/apply'; content: ImportedContent }
+  | { type: 'import/apply'; content: ImportedContent; source?: 'external-ai' | 'local-ai' }
   | { type: 'page/update'; id: string; patch: Partial<Pick<ContentPage, 'heading' | 'body' | 'durationSec'>> }
   | { type: 'page/add'; afterId?: string }
   | { type: 'page/remove'; id: string }
@@ -150,7 +150,7 @@ export function draftReducer(draft: ContentDraft, action: DraftAction, now = new
         draft,
         {
           templateId: null,
-          source: 'external-ai',
+          source: action.source ?? 'external-ai',
           pages: adaptPages(imported, format),
           caption: action.content.caption ?? draft.caption,
           cta: action.content.cta ?? draft.cta,
@@ -221,5 +221,5 @@ export function draftReducer(draft: ContentDraft, action: DraftAction, now = new
 }
 
 export function sourceLabel(source: DraftSource): string {
-  return { template: 'Template', 'external-ai': 'IA externa', manual: 'Manual' }[source];
+  return { template: 'Template', 'external-ai': 'IA externa', 'local-ai': 'IA local', manual: 'Manual' }[source];
 }

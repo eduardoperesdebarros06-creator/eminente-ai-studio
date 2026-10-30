@@ -30,7 +30,7 @@ export interface ContentPage {
 }
 
 /** De onde veio o texto atual do rascunho. */
-export type DraftSource = 'template' | 'external-ai' | 'manual';
+export type DraftSource = 'template' | 'external-ai' | 'local-ai' | 'manual';
 
 export interface ContentDraft {
   schemaVersion: 1;

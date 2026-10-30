@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Bot, ClipboardPaste, Copy, FilePlus2, LayoutTemplate, Wand2 } from 'lucide-react';
+import { Bot, ClipboardPaste, Copy, FilePlus2, LayoutTemplate, Sparkles, Wand2 } from 'lucide-react';
+import { LocalAiPanel } from '../ai/LocalAiPanel';
 import { Alert, Button, Card, CardHeader, Segmented, Select, TextArea, useToast } from '../../components/ui';
 import type { ImportedContent } from '../../domain/content/draft';
 import { importWarnings, parseExternalResponse } from '../../domain/content/parse';
@@ -10,7 +11,7 @@ import { copyText } from '../../lib/files';
 import { cx } from '../../lib/cx';
 import { unitNames } from './PagesEditor';
 
-type Tab = 'template' | 'ai';
+type Tab = 'template' | 'ai' | 'local';
 type ImportFeedback = { tone: 'danger' | 'warning' | 'success'; title: string; items: string[] } | null;
 
 const NO_TEMPLATE = '__none__';
@@ -29,7 +30,7 @@ export function SourcePanel({
   onRequireBrief: () => void;
   onApplyTemplate: (templateId: string) => Promise<boolean>;
   onStartManual: () => Promise<boolean>;
-  onImport: (content: ImportedContent) => Promise<boolean>;
+  onImport: (content: ImportedContent, source?: 'external-ai' | 'local-ai') => Promise<boolean>;
 }) {
   const toast = useToast();
   const templates = useMemo(() => templatesFor(brief.format), [brief.format]);
@@ -84,7 +85,7 @@ export function SourcePanel({
 
   return (
     <Card className="studio-panel">
-      <CardHeader title="Estrutura" description="Comece por um template ou traga texto de uma IA externa." />
+      <CardHeader title="Estrutura" description="Comece por um template, traga texto de uma IA externa ou gere com a IA local." />
       <div className="studio-panel__body">
         <Segmented<Tab>
           label="Origem do conteúdo"
@@ -94,10 +95,20 @@ export function SourcePanel({
           options={[
             { value: 'template', label: 'Template', icon: LayoutTemplate },
             { value: 'ai', label: 'IA externa', icon: Bot },
+            { value: 'local', label: 'IA local', icon: Sparkles },
           ]}
         />
 
-        {tab === 'template' ? (
+        {tab === 'local' ? (
+          <LocalAiPanel
+            brief={brief}
+            briefValid={briefValid}
+            templates={templates}
+            unit={unit}
+            onRequireBrief={onRequireBrief}
+            onImport={onImport}
+          />
+        ) : tab === 'template' ? (
           <div className="source">
             <div className="template-list" role="radiogroup" aria-label="Templates">
               {templates.map((t) => {

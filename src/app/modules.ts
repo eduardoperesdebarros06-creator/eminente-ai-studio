@@ -146,7 +146,7 @@ export const MODULES: readonly StudioModule[] = [
       'Pasta de exportação dos vídeos',
       'Diagnóstico de FFmpeg, navegador e SQLite',
       'Padrões de formato, tema, assinatura e motion para novo conteúdo',
-      'Integração opcional com Ollama (Fase 6)',
+      'IA local opcional (Ollama): endereço, modelo, criatividade e teste de conexão',
     ],
   },
 ];

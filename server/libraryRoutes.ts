@@ -1,6 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { Router, type Request, type Response } from 'express';
+import { normalizeOllamaUrl } from '../src/domain/ai/ai';
 import { deserializeDraft } from '../src/domain/content/serialize';
 import { hasContent, isExportKind, readSettings, type SettingsView, type VersionKind } from '../src/domain/library/library';
 import { Conflict, NotFound, type Library } from './db';
@@ -120,6 +121,11 @@ export function libraryRouter(lib: Library, opts: { defaultExportsDir: string })
   r.get('/settings', handle((_req, res) => res.json(view())));
 
   r.put('/settings', handle((req, res) => {
+    const rawUrl = (req.body as { ai?: { url?: unknown } } | undefined)?.ai?.url;
+    if (typeof rawUrl === 'string' && rawUrl.trim() && !normalizeOllamaUrl(rawUrl)) {
+      res.status(400).json({ error: 'O endereço do Ollama precisa ser desta máquina (ex.: http://127.0.0.1:11434). Nada é enviado para fora do computador.' });
+      return;
+    }
     const next = readSettings(req.body);
     if (next.exportsDir) {
       const problem = checkWritableDir(next.exportsDir);

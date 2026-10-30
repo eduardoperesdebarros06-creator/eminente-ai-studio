@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, FolderOutput, RefreshCw, RotateCcw, Save, Sparkles, Wrench, XCircle } from 'lucide-react';
+import { CheckCircle2, FolderOutput, RefreshCw, RotateCcw, Save, Wrench, XCircle } from 'lucide-react';
+import { AiSettingsCard } from '../ai/AiSettingsCard';
 import { getModule } from '../../app/modules';
 import { Alert, Badge, Button, Card, CardHeader, PageHeader, Segmented, Select, Spinner, Switch, TextInput, useToast } from '../../components/ui';
 import { FORMAT_LABELS, type ContentFormat } from '../../domain/content/types';
@@ -266,27 +267,11 @@ export function SettingsPage() {
           </div>
         </Card>
 
-        <Card>
-          <CardHeader
-            title={
-              <span className="planned__aside-title">
-                <Sparkles size={16} aria-hidden /> IA local (Ollama)
-              </span>
-            }
-            description="Integração opcional com um modelo rodando nesta máquina."
-            actions={
-              <Badge tone="warning" dot>
-                Fase 6 · não implementado
-              </Badge>
-            }
-          />
-          <div className="settings__body">
-            <p className="source__note">
-              Por enquanto, use o caminho “IA externa” do Content Studio: o estúdio gera o prompt, você cola em qualquer assistente e cola a
-              resposta de volta. Nada é enviado pela internet pelo app.
-            </p>
-          </div>
-        </Card>
+        <AiSettingsCard
+          saved={view.settings.ai}
+          saving={saving}
+          onSave={(ai) => void save({ ...view.settings, ai }, ai.enabled ? 'IA local ligada.' : 'Configurações da IA local salvas.')}
+        />
       </div>
     </div>
   );

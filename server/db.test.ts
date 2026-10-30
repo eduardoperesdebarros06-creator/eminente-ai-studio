@@ -166,11 +166,24 @@ describe('biblioteca SQLite', () => {
   it('configurações: padrão, gravação e valores inválidos corrigidos', () => {
     const lib = open();
     expect(lib.settings().defaults.format).toBe('carousel');
-    const s = lib.saveSettings({ exportsDir: '  C:\\Videos  ', defaults: { format: 'motion', design: { ...lib.settings().defaults.design, fps: 60 } } });
+    const s = lib.saveSettings({
+      ...lib.settings(),
+      exportsDir: '  C:\\Videos  ',
+      defaults: { format: 'motion', design: { ...lib.settings().defaults.design, fps: 60 } },
+      ai: { enabled: true, url: 'localhost:11434', model: 'llama3.2', temperature: 3 },
+    });
     expect(s.exportsDir).toBe('C:\\Videos');
-    expect(lib.settings()).toMatchObject({ exportsDir: 'C:\\Videos', defaults: { format: 'motion', design: { fps: 60 } } });
-    lib.saveSettings({ exportsDir: '', defaults: { format: 'xyz' as never, design: { fps: 7 } as never } });
-    expect(lib.settings()).toMatchObject({ exportsDir: null, defaults: { format: 'carousel', design: { fps: 30 } } });
+    expect(lib.settings()).toMatchObject({
+      exportsDir: 'C:\\Videos',
+      defaults: { format: 'motion', design: { fps: 60 } },
+      ai: { enabled: true, url: 'http://localhost:11434', model: 'llama3.2', temperature: 1 },
+    });
+    lib.saveSettings({ exportsDir: '', defaults: { format: 'xyz' as never, design: { fps: 7 } as never }, ai: { url: 'http://example.com' } as never });
+    expect(lib.settings()).toMatchObject({
+      exportsDir: null,
+      defaults: { format: 'carousel', design: { fps: 30 } },
+      ai: { enabled: false, url: 'http://127.0.0.1:11434', model: null },
+    });
   });
 });
 

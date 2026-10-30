@@ -163,9 +163,9 @@ export function ContentStudioPage() {
     return true;
   }
 
-  async function importContent(content: ImportedContent) {
-    if (!(await confirmReplace('Importar a resposta'))) return false;
-    dispatch({ type: 'import/apply', content });
+  async function importContent(content: ImportedContent, source: 'external-ai' | 'local-ai' = 'external-ai') {
+    if (!(await confirmReplace(source === 'local-ai' ? 'Aplicar o texto da IA local' : 'Importar a resposta'))) return false;
+    dispatch({ type: 'import/apply', content, source });
     setView('edit');
     return true;
   }

@@ -13,10 +13,9 @@ sem hospedagem e sem APIs pagas.
 | 3 | Posts e carrosséis com exportação PNG | **Implementada** |
 | 4 | Motion: quadros via Playwright + MP4 via FFmpeg | **Implementada** |
 | 5 | SQLite, biblioteca, histórico e recuperação | **Implementada** |
-| 6 | Integração opcional com Ollama | Planejada |
+| 6 | Integração opcional com Ollama | **Implementada** |
 
-O que é da Fase 6 aparece na interface com o selo **“Não implementado”** e a
-fase prevista. Nenhuma exportação é simulada.
+Todas as fases do plano estão implementadas. Nenhuma exportação é simulada.
 
 O que já gera arquivos de verdade:
 
@@ -41,6 +40,8 @@ histórico de versões e a lista dos arquivos exportados.
      assistente de IA (inclusive versões gratuitas) e cola a resposta de volta.
      A resposta pode vir em JSON (formato pedido no prompt) ou em texto livre
      (“Slide 1”, “Título:”, “Legenda:”…). Nada é enviado pela internet pelo app.
+   - **IA local** — gera a estrutura com um modelo do Ollama rodando nesta
+     máquina, sem copiar e colar (veja a Fase 6). Opcional e desligada por padrão.
    - **Em branco** — páginas vazias para escrever manualmente.
 3. **Edição** — títulos, textos, duração das cenas (motion), ordem das páginas,
    legenda, CTA e hashtags, com contadores e validação em tempo real.
@@ -175,7 +176,50 @@ git). Para usar outra pasta, defina `EMINENTE_DATA_DIR`.
 - **Padrões para novo conteúdo:** formato inicial, proporção, tema, assinatura,
   numeração, “Arraste →”, fps e transição do motion.
 - **Diagnóstico:** FFmpeg, ffprobe, navegador de renderização e SQLite.
-- **IA local (Ollama):** reservado para a Fase 6.
+- **IA local (Ollama):** liga/desliga, endereço, modelo e criatividade (veja a
+  Fase 6).
+
+## IA local com Ollama (Fase 6)
+
+Opcional: gera a estrutura do conteúdo (páginas, legenda, CTA e hashtags) com
+um modelo de linguagem rodando **nesta máquina**. Sem ela, o estúdio funciona
+igual, com Template ou IA externa.
+
+**Como ligar:**
+
+1. Instale o Ollama: `winget install Ollama.Ollama` (ou <https://ollama.com>).
+   Ele fica rodando em segundo plano.
+2. Baixe um modelo no terminal, por exemplo:
+
+   ```powershell
+   ollama pull llama3.2
+   ```
+
+   O `llama3.2` (3 B, cerca de 2 GB) roda em computadores comuns. Modelos
+   maiores, como `qwen2.5:7b` ou `llama3.1:8b`, escrevem melhor em português,
+   mas pedem mais memória e são mais lentos.
+3. Em **Configurações › IA local**, ligue a chave, clique em **Testar conexão**,
+   escolha o modelo e **Salvar IA local**.
+
+**Como usar:** no Content Studio, preencha o briefing, abra **Estrutura › IA
+local**, escolha a estrutura sugerida e clique em **Gerar com IA local**. O
+texto aparece enquanto é escrito e pode ser cancelado. No fim, ele é lido pelo
+mesmo leitor da IA externa e entra no editor, com a origem “IA local”. Antes
+de substituir um conteúdo existente, o estúdio pede confirmação e salva uma
+versão “Antes de: …” na Biblioteca. Se o modelo responder fora do formato, o
+texto fica editável para importar mesmo assim, ou você pode gerar de novo.
+
+**Desempenho:** sem placa de vídeo compatível, o Ollama usa só a CPU. Com o
+`llama3.2` num computador comum, uma resposta leva de 30 s a 2 min (a primeira,
+que carrega o modelo, demora mais). O limite é de 5 minutos por geração.
+
+**Privacidade e segurança:**
+
+- O endereço do Ollama precisa ser desta máquina (`127.0.0.1`, `localhost` ou
+  `::1`). Qualquer outro é recusado: o briefing nunca sai do computador.
+- O navegador não fala com o Ollama: o servidor do estúdio faz a ponte e, se
+  você cancelar ou fechar a página, para a geração.
+- Modelos locais erram e inventam. Revise o texto antes de publicar.
 
 ## Requisitos (Windows)
 
@@ -265,6 +309,7 @@ src/
                   das cenas (layout puro, sem DOM: reaproveitado pelo motion)
   domain/motion/  Linha do tempo, transições e entrada dos elementos (puro, sem DOM),
                   especificação/conferência do MP4 e contrato da API de renderização
+  domain/ai/      IA local: configurações, endereço só desta máquina, escolha do modelo
   domain/library/ Contrato da biblioteca e regras puras: título, "tem conteúdo",
                   comparação de conteúdo, agrupamento de versões, configurações
   render/         Desenho das cenas em Canvas, geração/verificação de PNG e gravação
@@ -279,8 +324,9 @@ src/
 server/           Servidor local (Express): serve a interface e a API de motion —
                   diagnóstico das ferramentas, fila de renderização com progresso e
                   cancelamento, Playwright → FFmpeg → ffprobe e download do MP4 —
-                  e a biblioteca (db.ts: SQLite; libraryRoutes.ts: API de
-                  projetos, versões, exportações e configurações)
+                  a biblioteca (db.ts: SQLite; libraryRoutes.ts: API de
+                  projetos, versões, exportações e configurações) e a ponte com o
+                  Ollama (ollama.ts, aiRoutes.ts: situação e geração em NDJSON)
 render.html       Página interna aberta pelo Playwright para desenhar os quadros
 data/             Banco da biblioteca e cópias de segurança (criado ao rodar; fora do git)
 ```
@@ -348,7 +394,12 @@ FFmpeg) fica só no servidor, nunca no frontend.
   guardado de lado com aviso, cópia de segurança abre com os mesmos projetos,
   rodízio das cópias e recusa de esquema mais novo;
 - API da biblioteca num servidor real: gravar, listar, abrir, restaurar,
-  rascunho vazio, entradas inválidas, lixeira, exportações e pasta dos vídeos.
+  rascunho vazio, entradas inválidas, lixeira, exportações e pasta dos vídeos;
+- IA local: endereços aceitos só desta máquina, configurações corrigidas, escolha
+  do modelo; e, contra um Ollama simulado, situação (pronta, desligada, sem
+  modelos, fora do ar), geração em pedaços com o JSON pedido ao modelo e
+  resultado importável, erro no meio do streaming, erros antes de começar,
+  cancelamento que interrompe o Ollama, e recusa de endereço externo.
 
 Além dos testes automatizados, cada fase foi verificada num Chromium real
 (Playwright). Na Fase 3, os PNGs baixados foram conferidos com `ffprobe`, o
@@ -362,4 +413,7 @@ sozinho na Biblioteca, a versão com nome foi gravada, “Novo conteúdo” guar
 anterior, os dados do navegador foram apagados e o projeto foi reaberto pelo
 dashboard sem perda, uma versão foi restaurada, a pasta relativa foi recusada,
 os padrões salvos valeram no conteúdo novo e um MP4 renderizado ficou
-registrado no projeto.
+registrado no projeto. Na Fase 6, com o Ollama 0.40.13 e o `llama3.2` (só CPU):
+a IA local foi ligada pelas Configurações, um roteiro de motion foi gerado no
+Content Studio com o texto aparecendo em tempo real (cerca de 1 min e meio) e
+importado com 4 cenas, legenda, CTA, hashtags e origem “IA local”.
