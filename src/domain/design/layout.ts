@@ -7,7 +7,7 @@ import { fitText, wrapText, type FitOptions, type FontSpec, type Measurer } from
 /**
  * Monta a "cena" de uma página: elementos com posição e tamanho finais em
  * pixels. É puro (sem DOM): o mesmo resultado alimenta a pré-visualização,
- * a exportação PNG e, na Fase 4, os quadros do vídeo.
+ * a exportação PNG e os quadros do vídeo (motion).
  */
 export type SceneElement =
   | { kind: 'rect'; id: string; x: number; y: number; w: number; h: number; fill: string; radius: number }

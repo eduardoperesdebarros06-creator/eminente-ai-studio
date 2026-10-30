@@ -62,7 +62,7 @@ function rgba(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-function drawElement(ctx: CanvasRenderingContext2D, el: SceneElement, scene: Scene) {
+export function drawElement(ctx: CanvasRenderingContext2D, el: SceneElement, scene: Scene) {
   switch (el.kind) {
     case 'rect':
       ctx.fillStyle = el.fill;

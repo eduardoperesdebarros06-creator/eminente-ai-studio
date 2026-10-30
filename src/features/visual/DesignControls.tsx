@@ -2,7 +2,15 @@ import { Card, CardHeader, Segmented, Switch, TextInput } from '../../components
 import type { DraftAction } from '../../domain/content/draft';
 import type { ContentDraft } from '../../domain/content/types';
 import { FORMATS_BY_CONTENT, getFormat, type FormatId } from '../../domain/design/formats';
-import { effectiveFormat, HANDLE_MAX } from '../../domain/design/settings';
+import {
+  effectiveFormat,
+  HANDLE_MAX,
+  MOTION_FPS,
+  MOTION_TRANSITIONS,
+  TRANSITION_LABELS,
+  type MotionFps,
+  type MotionTransition,
+} from '../../domain/design/settings';
 import { THEMES } from '../../domain/design/themes';
 import { cx } from '../../lib/cx';
 
@@ -70,6 +78,38 @@ export function DesignControls({ draft, dispatch }: { draft: ContentDraft; dispa
           hint="Aparece no rodapé. Deixe vazio para ocultar."
           counter={{ current: design.handle.length, max: HANDLE_MAX }}
         />
+
+        {kind === 'motion' && (
+          <>
+            <div className="field">
+              <span className="field__label" aria-hidden>
+                Quadros por segundo
+              </span>
+              <Segmented<`${MotionFps}`>
+                label="Quadros por segundo"
+                value={`${design.fps}`}
+                onChange={(v) => set({ fps: Number(v) as MotionFps })}
+                fullWidth
+                size="sm"
+                options={MOTION_FPS.map((f) => ({ value: `${f}` as const, label: `${f} fps` }))}
+              />
+              <p className="field__hint">30 fps serve para redes sociais; 60 fps deixa o movimento mais suave e o arquivo maior.</p>
+            </div>
+            <div className="field">
+              <span className="field__label" aria-hidden>
+                Transição entre cenas
+              </span>
+              <Segmented<MotionTransition>
+                label="Transição entre cenas"
+                value={design.transition}
+                onChange={(v) => set({ transition: v })}
+                fullWidth
+                size="sm"
+                options={MOTION_TRANSITIONS.map((t) => ({ value: t, label: TRANSITION_LABELS[t] }))}
+              />
+            </div>
+          </>
+        )}
 
         {isCarousel && (
           <>

@@ -287,14 +287,12 @@ export function ContentStudioPage() {
                 />
                 <ExportActions draft={draft} validation={validation} />
               </div>
-              {format !== 'motion' && (
-                <div className="studio__next">
-                  <span>Texto pronto? Gere as imagens da peça.</span>
-                  <ButtonLink to={format === 'post' ? '/design' : '/carousel'} variant="primary" size="sm" iconRight={ArrowRight}>
-                    Diagramar no {format === 'post' ? 'Design Studio' : 'Carousel Studio'}
-                  </ButtonLink>
-                </div>
-              )}
+              <div className="studio__next">
+                <span>{format === 'motion' ? 'Roteiro pronto? Anime as cenas e exporte o vídeo.' : 'Texto pronto? Gere as imagens da peça.'}</span>
+                <ButtonLink to={format === 'post' ? '/design' : format === 'carousel' ? '/carousel' : '/motion'} variant="primary" size="sm" iconRight={ArrowRight}>
+                  {format === 'motion' ? 'Animar no Motion Studio' : `Diagramar no ${format === 'post' ? 'Design Studio' : 'Carousel Studio'}`}
+                </ButtonLink>
+              </div>
               <IssuesSummary validation={validation} />
               {view === 'edit' ? (
                 <div className="stack">

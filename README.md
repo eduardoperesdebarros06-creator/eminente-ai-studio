@@ -11,11 +11,11 @@ sem hospedagem e sem APIs pagas.
 | 1 | Interface navegável, design system e dashboard | **Implementada** |
 | 2 | Content Studio (templates + texto de IA externa) | **Implementada** |
 | 3 | Posts e carrosséis com exportação PNG | **Implementada** |
-| 4 | Motion: quadros via Playwright + MP4 via FFmpeg | Planejada |
+| 4 | Motion: quadros via Playwright + MP4 via FFmpeg | **Implementada** |
 | 5 | SQLite, biblioteca, histórico e recuperação | Planejada |
 | 6 | Integração opcional com Ollama | Planejada |
 
-Os módulos das fases 4–6 aparecem na interface com o selo **“Não implementado”**
+Os módulos das fases 5–6 aparecem na interface com o selo **“Não implementado”**
 e a fase prevista. Nenhuma exportação é simulada.
 
 O que já gera arquivos de verdade:
@@ -23,9 +23,9 @@ O que já gera arquivos de verdade:
 - **Content Studio:** conteúdo em `.md` e `.json`.
 - **Design Studio e Carousel Studio:** imagens PNG na resolução final, uma por
   página no caso de carrosséis.
+- **Motion Studio:** vídeo MP4 (H.264) conferido com o `ffprobe`.
 
-Ainda **não** há exportação de vídeo (Fase 4), e a biblioteca de projetos
-(SQLite) chega na Fase 5.
+A biblioteca de projetos (SQLite) chega na Fase 5.
 
 ## Content Studio (Fase 2)
 
@@ -90,19 +90,70 @@ bloquear o armazenamento, o estúdio avisa; nesse caso, baixe o `.json`. Um
 rascunho corrompido nunca é carregado: o estúdio recomeça e guarda uma cópia
 dos dados originais na chave `eminente:contentDraft.corrupt`.
 
+## Motion Studio (Fase 4)
+
+Anima o roteiro de motion do Content Studio (formato **Motion**, cenas com
+duração) e exporta MP4. Use o botão **Animar no Motion Studio** no Content
+Studio ou o menu lateral.
+
+- **Mesmo desenho das imagens:** cada cena usa o layout, o tema e a assinatura
+  do Design Studio, nos formatos 9:16, 1:1, 4:5 ou 16:9.
+- **Animação:** os elementos entram em sequência (barra/número, título, texto,
+  CTA). Entre as cenas: **Esmaecer**, **Deslizar** ou **Corte**. A transição
+  fica centrada no limite entre duas cenas, então a duração total é sempre a
+  soma das durações.
+- **Quadros por segundo:** 24, 30 (padrão) ou 60.
+- **Pré-visualização:** reproduzir/pausar, linha do tempo com as cenas e
+  posição quadro a quadro. Usa a mesma linha do tempo e o mesmo código de
+  desenho da renderização.
+- **Ajustes rápidos** de título, texto, duração e CTA da cena selecionada.
+- **Bloqueios:** texto cortado, erro de conteúdo ou ferramenta faltando impedem a
+  renderização, com o motivo na tela.
+
+**Como o MP4 é gerado** (servidor local em `server/`):
+
+1. O servidor abre a página interna `render.html` num navegador sem janela
+   (Playwright: Chromium do Playwright, ou o Microsoft Edge do Windows).
+2. Cada quadro é desenhado em resolução final e enviado como PNG ao FFmpeg
+   (H.264, `yuv420p`, CRF 18, `+faststart`).
+3. O `ffprobe` confere codec, formato de pixel, resolução, FPS, número de
+   quadros e duração. Só então o arquivo recebe o nome final.
+4. Se algo falhar ou você cancelar, o arquivo temporário é apagado: nenhum MP4
+   incompleto fica na pasta.
+
+Os vídeos ficam em `exports/` (ex.:
+`eminente-motion-<assunto>-1080x1350-30fps.mp4`), e o botão **Baixar cópia**
+baixa pelo navegador. Para gravar em outra pasta, defina `EMINENTE_EXPORTS_DIR`.
+Uma renderização por vez; 11 s em 30 fps levam cerca de 30 s.
+
 ## Requisitos (Windows)
 
 - **Node.js 22.12 ou superior** (LTS) — <https://nodejs.org>. Durante a
   instalação, mantenha marcada a opção que adiciona o Node ao `PATH`.
+- **FFmpeg** (inclui o `ffprobe`), para exportar MP4:
+
+  ```powershell
+  winget install Gyan.FFmpeg
+  ```
+
+  Depois, **feche e reabra o terminal** para o `ffmpeg` entrar no `PATH`. Se
+  preferir não mexer no `PATH`, defina `FFMPEG_PATH` e `FFPROBE_PATH` com o
+  caminho completo dos executáveis.
+- **Navegador para os quadros:** o Microsoft Edge, que já vem no Windows, é usado
+  automaticamente. Opcionalmente, `npx playwright install chromium` baixa o
+  Chromium do Playwright, que passa a ter preferência.
 - Git (opcional, para clonar o repositório).
-- FFmpeg será necessário a partir da Fase 4 (instruções serão adicionadas então).
 
 Confira no PowerShell:
 
 ```powershell
 node -v
 npm -v
+ffmpeg -version
 ```
+
+No Motion Studio, o painel **Exportar MP4** mostra o que foi encontrado; após
+instalar algo, clique em **Verificar ferramentas**.
 
 ## Instalação e execução
 
@@ -114,17 +165,24 @@ npm run dev
 ```
 
 Abra <http://127.0.0.1:5173>. O servidor escuta apenas em `127.0.0.1`, ou seja,
-não fica acessível a outros computadores da rede.
+não fica acessível a outros computadores da rede, e a API recusa chamadas vindas
+de outros sites abertos no navegador.
+
+`npm run dev` sobe o servidor local (`server/index.ts`), que serve a interface
+(Vite, com recarga automática) e a API de renderização. Rodar só o `vite` abre a
+interface, mas sem exportação de MP4.
 
 ### Outros comandos
 
 | Comando | O que faz |
 | --- | --- |
-| `npm run dev` | Inicia a interface em modo de desenvolvimento |
+| `npm run dev` | Inicia o estúdio em modo de desenvolvimento |
 | `npm run build` | Verifica tipos (TypeScript) e gera a versão de produção em `dist/` |
-| `npm run preview` | Serve a versão de produção gerada pelo build |
+| `npm start` | Serve a versão de produção (rode `npm run build` antes) |
 | `npm test` | Executa os testes (Vitest) |
 | `npm run typecheck` | Apenas a verificação de tipos |
+
+Para usar outra porta: `$env:PORT=5180; npm run dev`.
 
 ### Problemas comuns no Windows
 
@@ -133,8 +191,12 @@ não fica acessível a outros computadores da rede.
 - **Execução de scripts desabilitada no PowerShell** (`npm.ps1 cannot be
   loaded`): rode `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` ou use o
   Prompt de Comando (`cmd`).
-- **Porta 5173 ocupada**: o Vite usa a próxima porta livre e mostra o endereço
-  no terminal.
+- **Porta 5173 ocupada**: o servidor avisa e encerra. Feche o outro processo ou
+  use outra porta (`$env:PORT=5180; npm run dev`).
+- **“ffmpeg não encontrado”** logo após instalar: feche e reabra o terminal (o
+  `PATH` só é lido ao abrir) e rode `npm run dev` de novo.
+- **“Servidor de renderização indisponível”** no Motion Studio: o estúdio foi
+  aberto só com o Vite. Use `npm run dev`.
 
 ## Estrutura
 
@@ -150,19 +212,26 @@ src/
                   exportação e serialização
   domain/design/  Formatos, temas, configurações, quebra/ajuste de texto e montagem
                   das cenas (layout puro, sem DOM: reaproveitado pelo motion)
+  domain/motion/  Linha do tempo, transições e entrada dos elementos (puro, sem DOM),
+                  especificação/conferência do MP4 e contrato da API de renderização
   render/         Desenho das cenas em Canvas, geração/verificação de PNG e gravação
-                  (pasta, downloads, .zip)
+                  (pasta, downloads, .zip); quadros do motion e a página interna
+                  usada pelo Playwright (motionPage.ts, carregada por render.html)
   features/       Uma pasta por módulo (dashboard, content, visual, design, carousel,
                   motion, library, settings, design-system)
   lib/            Utilitários (classes CSS, armazenamento local, arquivos, leitura
                   de cabeçalho PNG, gerador de ZIP)
   styles/         tokens.css (fonte única de cores/tipos/espaços), base, componentes,
                   layout e páginas
+server/           Servidor local (Express): serve a interface e a API de motion —
+                  diagnóstico das ferramentas, fila de renderização com progresso e
+                  cancelamento, Playwright → FFmpeg → ffprobe e download do MP4
+render.html       Página interna aberta pelo Playwright para desenhar os quadros
 ```
 
-Previsto para as próximas fases: `server/` (Express local: persistência SQLite,
-renderização com Playwright e codificação FFmpeg), mantendo segredos e acesso
-ao sistema de arquivos fora do frontend.
+Acesso ao sistema de arquivos e programas externos (Playwright, FFmpeg) fica só
+no servidor, nunca no frontend. A persistência SQLite da Fase 5 também vai para
+`server/`.
 
 ## Decisões técnicas
 
@@ -173,8 +242,16 @@ ao sistema de arquivos fora do frontend.
 - **CSS próprio com tokens**: todas as cores, espaçamentos e tipos vêm de
   `src/styles/tokens.css`.
 - **Remotion não é usado**: a licença precisa ser avaliada antes de qualquer uso
-  em uma ferramenta automatizada de geração de vídeo. O pipeline previsto é
+  em uma ferramenta automatizada de geração de vídeo. O pipeline usado é
   Playwright (quadros) + FFmpeg (MP4).
+- **Um só código de desenho**: pré-visualização, PNG e quadros do vídeo usam as
+  mesmas cenas (`domain/design/layout.ts`) e a mesma linha do tempo
+  (`domain/motion/timeline.ts`). O servidor confere que a página de renderização
+  calculou exatamente a resolução e o número de quadros esperados.
+- **Playwright com versão fixa** (`1.63.0`) e, sem o Chromium dele, o Microsoft
+  Edge do Windows (`channel: msedge`): nenhum download extra é obrigatório.
+- **Sem shell**: FFmpeg e ffprobe são chamados com argumentos separados
+  (`spawn`), nunca por uma linha de comando montada com texto do usuário.
 - **Preferências de interface** (ex.: menu recolhido) ficam em `localStorage`;
   dados de projeto irão para SQLite na Fase 5.
 
@@ -195,9 +272,17 @@ ao sistema de arquivos fora do frontend.
   gravação com debounce, falha de gravação e recuperação;
 - quebra e ajuste de texto, e cenas em todos os formatos e temas, com todos os
   elementos dentro da área, estouro detectado e reticências dentro da largura;
-- leitura de cabeçalho PNG, CRC32 e estrutura do ZIP.
+- leitura de cabeçalho PNG, CRC32 e estrutura do ZIP;
+- linha do tempo do motion: duração total, número de quadros, transições
+  centradas (esmaecer, deslizar, corte), entrada dos elementos e limites;
+- leitura da saída do `ffprobe` e conferência do MP4 (codec, pixel, resolução,
+  FPS, quadros, duração) e nomes de arquivo seguros.
 
 Além dos testes automatizados, cada fase foi verificada num Chromium real
 (Playwright). Na Fase 3, os PNGs baixados foram conferidos com `ffprobe`, o
 `.zip` foi aberto e testado, e a cor de fundo de cada tema foi lida pixel a
-pixel.
+pixel. Na Fase 4, foram gerados MP4 reais no Windows (FFmpeg 9.0.2, Edge) em
+24, 30 e 60 fps com as três transições, conferidos pelo `ffprobe`; quadros de
+cada transição foram extraídos e inspecionados; o cancelamento no meio não deixou
+arquivo; e a API recusou nomes de arquivo fora da pasta e chamadas de outra
+origem.

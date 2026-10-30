@@ -6,6 +6,7 @@ export type MotionFps = 24 | 30 | 60;
 export type MotionTransition = 'fade' | 'slide' | 'cut';
 export const MOTION_FPS: readonly MotionFps[] = [24, 30, 60];
 export const MOTION_TRANSITIONS: readonly MotionTransition[] = ['fade', 'slide', 'cut'];
+export const TRANSITION_LABELS: Record<MotionTransition, string> = { fade: 'Esmaecer', slide: 'Deslizar', cut: 'Corte' };
 
 export interface DesignSettings {
   formatId: FormatId;

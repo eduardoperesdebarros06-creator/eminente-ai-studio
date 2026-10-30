@@ -150,18 +150,12 @@ export function VisualStudioPage({ kind }: { kind: Kind }) {
           <EmptyState
             icon={AlertTriangle}
             title={`O conteúdo atual é ${other === 'carousel' ? 'um carrossel' : other === 'motion' ? 'um motion' : 'um post'}`}
-            description={
-              other === 'motion'
-                ? 'Peças em motion são diagramadas no Motion Studio, que chega na Fase 4. Para gerar imagens aqui, mude o formato no Content Studio.'
-                : `Abra o estúdio correspondente ou mude o formato para "${kind === 'post' ? 'Post' : 'Carrossel'}" no Content Studio.`
-            }
+            description={`Abra o estúdio correspondente ou mude o formato para "${kind === 'post' ? 'Post' : 'Carrossel'}" no Content Studio.`}
             actions={
               <>
-                {other !== 'motion' && (
-                  <ButtonLink to={STUDIO_FOR[other]} variant="primary" iconRight={ArrowRight}>
-                    Abrir no {other === 'carousel' ? 'Carousel Studio' : 'Design Studio'}
-                  </ButtonLink>
-                )}
+                <ButtonLink to={STUDIO_FOR[other]} variant="primary" iconRight={ArrowRight}>
+                  Abrir no {other === 'carousel' ? 'Carousel Studio' : other === 'motion' ? 'Motion Studio' : 'Design Studio'}
+                </ButtonLink>
                 <ButtonLink to="/content" icon={ArrowLeft}>
                   Content Studio
                 </ButtonLink>

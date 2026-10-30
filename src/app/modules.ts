@@ -109,12 +109,12 @@ export const MODULES: readonly StudioModule[] = [
     icon: Clapperboard,
     group: 'create',
     phase: 4,
-    status: 'planned',
+    status: 'available',
     capabilities: [
-      'Sistema de cenas e transições',
-      'Renderização de quadros com Playwright',
-      'Codificação MP4 com FFmpeg',
-      'Validação de resolução, FPS e duração',
+      'Cenas com entrada animada e transições (esmaecer, deslizar, corte)',
+      'Pré-visualização com reprodução, linha do tempo e quadro a quadro',
+      'Quadros renderizados com Playwright e codificados em MP4 (H.264) com FFmpeg',
+      'Resolução, FPS, quadros e duração conferidos com o ffprobe',
     ],
   },
   {

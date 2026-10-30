@@ -25,13 +25,13 @@ export const ROADMAP: readonly RoadmapPhase[] = [
     phase: 3,
     title: 'Posts e carrosséis',
     summary: 'Pré-visualização e exportação PNG real.',
-    state: 'current',
+    state: 'done',
   },
   {
     phase: 4,
     title: 'Motion',
     summary: 'Cenas animadas, quadros via Playwright e MP4 via FFmpeg.',
-    state: 'next',
+    state: 'current',
   },
   {
     phase: 5,
